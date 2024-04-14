@@ -4,27 +4,20 @@
 -- Tells HLS to show warnings, and the file won't be compiled if there are any warnings, e.g.,
 -- eval (-- >>>) won't work.
 {-# OPTIONS_GHC -Wall -Werror #-}
-{-# OPTIONS_GHC -Wno-type-defaults #-}
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
--- CHANGE MODULE NAME TO HW1 BEFORE SUBMISSION !!! --
-module Main where
+module HW1 where
 
--- REMOVE IO AND PRINT BEFORE SUBMISSION !!! --
 -- These import statement ensures you aren't using any "advanced" functions and types, e.g., lists.
-
-import Control.Concurrent.STM (check)
-import Prelude (Bool (..), Eq (..), IO, Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, print, undefined, ($), (&&), (.), (||))
+import Prelude (Bool (..), Eq (..), Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, undefined, ($), (&&), (.), (||))
 
 ------------------------------------------------
 -- DO NOT MODIFY ANYTHING ABOVE THIS LINE !!! --
 ------------------------------------------------
 
 -- ********* --
-
 -- Section 1
-
 -- ********* --
 
 const :: a -> b -> a
@@ -63,9 +56,7 @@ impossible :: a -> b
 impossible = undefined -- TODO: ASK DANIEL ABOUT THIS
 
 -- ********* --
-
 -- Section 2
-
 -- ********* --
 
 power :: Integer -> Integer -> Integer
@@ -130,9 +121,7 @@ rotateDigits x
   | otherwise = (x `mod` 10) * power 10 (countDigits (x `div` 10)) + (x `div` 10)
 
 -- ********* --
-
 -- Section 3
-
 -- ********* --
 
 type Generator a = (a -> a, a -> Bool, a)
@@ -185,9 +174,7 @@ countGen p (f, cont, x) = go (f x) 0 -- skip the initial seed
       | otherwise = go (f y) counter -- Continue with the next element
 
 -- ********* --
-
 -- Section 4
-
 -- ********* --
 
 isPrime :: Integer -> Bool
@@ -201,7 +188,15 @@ isPrime n
       | x `mod` y == 0 = False -- If x is divisible by y, x is not prime
       | otherwise = isPrime' x (y + 1) -- Continue with the next number
 
--- isSemiprime :: Integer -> Bool
+isSemiprime :: Integer -> Bool
+isSemiprime n
+  | n < 2 = False
+  | otherwise = semiPrimeCheck 2
+  where
+    semiPrimeCheck d
+      | d * d > n = False
+      | n `mod` d == 0 = (isPrime d && isPrime (n `div` d)) || semiPrimeCheck (d + 1)
+      | otherwise = semiPrimeCheck (d + 1)
 
 goldbachPair :: Integer -> (Integer, Integer)
 goldbachPair n
@@ -234,9 +229,7 @@ goldbachPair' n
           | otherwise = go (y + 1) (a, b) maxProduct -- continue with the next number
 
 -- ***** --
-
 -- Bonus
-
 -- ***** --
 
 isCircularPrime :: Integer -> Bool
@@ -248,16 +241,3 @@ isCircularPrime x = checkIsCircularPrime x (countDigits x)
     checkIsCircularPrime y counter
       | not (isPrime y) = False
       | otherwise = checkIsCircularPrime (rotateDigits y) (counter - 1)
-
--- ********* REMOVE BEFORE SUBMISSION ********* --
-
-main :: IO ()
-main = do
-  print "HW1"
-  print $ isCircularPrime 5 -- True
-  print $ isCircularPrime 17 -- True
-  print $ isCircularPrime 103 -- False
-  print $ isCircularPrime 193 -- False
-  print $ isCircularPrime 197 -- True
-  print $ isCircularPrime 199 -- True
-  print "Done"
