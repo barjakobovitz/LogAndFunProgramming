@@ -135,14 +135,31 @@ rotateDigits x
 type Generator a = (a -> a, a -> Bool, a)
 
 -- nullGen :: Generator a -> Bool
--- lastGen :: Generator a -> a
--- lengthGen :: Generator a -> Int
+lastGen :: Generator a -> a
+lastGen (next, stop, seed)
+      | not (stop seed)    = seed
+      | otherwise = lastGen (next, stop, next seed)
+
+lengthGen :: Generator a -> Int
+lengthGen (next, stop, seed)
+      | not (stop seed) = 0
+      | otherwise = 1+lengthGen (next, stop, next seed)
+
 -- sumGen :: Generator Integer -> Integer
+
 
 type Predicate a = a -> Bool
 
 -- anyGen :: Predicate a -> Generator a -> Bool
--- allGen :: Predicate a -> Generator a -> Bool
+
+allGen :: Predicate a -> Generator a -> Bool
+allGen pred (next,cond,seed) = go (next seed) -- skip the initial seed
+ where
+   go y
+    | not (pred y) = False -- Return true if the predicate is false
+    | not (cond y) = True -- Stop if get to the last element
+    | otherwise = go (next y) -- Continue with the next element
+
 -- noneGen :: Predicate a -> Generator a -> Bool
 -- countGen :: Predicate a -> Generator a -> Int
 
@@ -179,7 +196,15 @@ main = do
   --   print $ fromBinary 1 -- Should output 1
   --   print $ fromBinary 101010 -- Should output 42
   --   print $ fromBinary (-1010) -- Should output -10
-  print $ isAbundant 9 -- Should output False
-  print $ isAbundant (-12345) -- Should output False
-  print $ isAbundant 12 -- Should output True
-  print $ isAbundant 945 -- Should output True
+  --print $ isAbundant 9 -- Should output False
+  --print $ isAbundant (-12345) -- Should output False
+  --print $ isAbundant 12 -- Should output True
+  --print $ isAbundant 945 -- Should output True
+  --print $ lastGen ((* 2), (< 1), 1 :: Integer) -- Should output 1
+  --print $ lastGen ((* 2) , (<= 1) , 1 :: Integer) -- Should output 2
+  --print $ lastGen ((* 2) , (< 1000) , 1 :: Integer) -- Should output 1024
+  --print $ lengthGen ((+ 1) :: Integer -> Integer, (< 0) :: Integer -> Bool, 0 :: Integer)-- Should output 0
+  --print $ lengthGen ((+ 1) :: Integer -> Integer, (<= 0) :: Integer -> Bool, 0 :: Integer)-- Should output 1
+  --print $ lengthGen ((+ 1) :: Integer -> Integer, (< 10) :: Integer -> Bool, 0 :: Integer)-- Should output 10
+  print $ allGen (< 10) ((* 2) , (< 1000) , 1 :: Integer)
+  print $ allGen (> 0) ((* 2) , (< 1000) , 1 :: Integer)
