@@ -109,8 +109,22 @@ fromBinary n
     toDecimal 0 _ = 0
     toDecimal x counter = (x `mod` 10) * power 2 counter + toDecimal (x `div` 10) (counter + 1)
 
--- isAbundant :: Integer -> Bool
--- rotateDigits :: Integer -> Integer
+isAbundant :: Integer -> Bool
+isAbundant n
+  | n <= 0 = False -- Abundance doesn't apply to non-positive numbers
+  | otherwise = sumDivs n n - 1 > n -- Check if the sum of divisors is greater than the number
+  where
+    sumDivs :: Integer -> Integer -> Integer
+    sumDivs n current
+      | current == 0 = 0 -- Base case: no divisors below 1
+      | n `mod` current == 0 = current + sumDivs n (current - 1) -- Add current if it's a divisor
+      | otherwise = sumDivs n (current - 1) -- Continue with the next lower number
+
+rotateDigits :: Integer -> Integer
+rotateDigits x
+  | x < 0 = -rotateDigits (-x)
+  | x < 10 = x
+  | otherwise = (x `mod` 10) * power 10 (countDigits (x `div` 10)) + (x `div` 10)
 
 -- ********* --
 
@@ -152,6 +166,23 @@ type Predicate a = a -> Bool
 isCircularPrime :: Integer -> Bool
 -- If you choose the implement this function, replace this with the actual implementation
 isCircularPrime = undefined
+
+-- ********* REMOVE BEFORE SUBMISSION ********* --
+
+main :: IO ()
+main = do
+  print $ toBinary 0 -- Should output 0
+  print $ toBinary 1 -- Should output 1
+  print $ toBinary 42 -- Should output 101010
+  print $ toBinary (-10) -- Should output -1010
+  print $ fromBinary 0 -- Should output 0
+  print $ fromBinary 1 -- Should output 1
+  print $ fromBinary 101010 -- Should output 42
+  print $ fromBinary (-1010) -- Should output -10
+  print $ isAbundant 9 -- Should output False
+  print $ isAbundant (-12345) -- Should output False
+  print $ isAbundant 12 -- Should output True
+  print $ isAbundant 945 -- Should output True
 
 -- ********* REMOVE BEFORE SUBMISSION ********* --
 
