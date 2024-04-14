@@ -4,6 +4,7 @@
 -- Tells HLS to show warnings, and the file won't be compiled if there are any warnings, e.g.,
 -- eval (-- >>>) won't work.
 {-# OPTIONS_GHC -Wall -Werror #-}
+{-# OPTIONS_GHC -Wno-type-defaults #-}
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
@@ -146,7 +147,14 @@ sumGen (f, p, x)
 
 type Predicate a = a -> Bool
 
--- anyGen :: Predicate a -> Generator a -> Bool
+anyGen :: Predicate a -> Generator a -> Bool
+anyGen p (f, cont, x) = go (f x) -- skip the initial seed
+  where
+    go y
+      | not (cont y) = False -- Stop if the continuation predicate is false
+      | p y = True -- Return true if the predicate is true
+      | otherwise = go (f y) -- Continue with the next element
+
 -- allGen :: Predicate a -> Generator a -> Bool
 -- noneGen :: Predicate a -> Generator a -> Bool
 -- countGen :: Predicate a -> Generator a -> Int
@@ -177,4 +185,11 @@ isCircularPrime = undefined
 main :: IO ()
 main = do
   print "HW1"
+  print $ nullGen ((+ 1), (< 0), 0) -- True
+  print $ nullGen ((+ 1), (<= 0), 0) -- false
+  print $ nullGen ((+ 1), (<= 1), 0) -- False
+  print $ nullGen ((+ 1), const True, 0) -- False
+  print $ sumGen ((+ 1), (< 10), 0) -- 55
+  print $ sumGen ((+ 1), (< 10), 1) -- 54
+  print $ sumGen ((+ 1), (< 10), 10) -- 0
   print "Done"
