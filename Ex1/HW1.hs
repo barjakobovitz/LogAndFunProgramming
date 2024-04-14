@@ -7,11 +7,12 @@
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
---module HW1 where
+-- CHANGE MODULE NAME TO HW1 BEFORE SUBMISSION !!! --
 module Main where
 
+-- REMOVE IO AND PRINT BEFORE SUBMISSION !!! --
 -- These import statement ensures you aren't using any "advanced" functions and types, e.g., lists.
-import Prelude (Bool (..), Eq (..), Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, undefined, ($), (&&), (.), (||) ,IO, putStrLn, print, show, (++))
+import Prelude (Bool (..), Eq (..), IO, Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, print, undefined, ($), (&&), (.), (||))
 
 ------------------------------------------------
 -- DO NOT MODIFY ANYTHING ABOVE THIS LINE !!! --
@@ -56,7 +57,7 @@ lotate f x y z = f z x y
 
 -- How can we ever implement such a function!?
 impossible :: a -> b
-impossible = error "impossible" -- TODO: ASK DANIEL ABOUT THIS
+impossible = undefined -- TODO: ASK DANIEL ABOUT THIS
 
 -- ********* --
 
@@ -64,46 +65,67 @@ impossible = error "impossible" -- TODO: ASK DANIEL ABOUT THIS
 
 -- ********* --
 
-countDigits :: Integer -> Integer
-countDigits 0 = 1
-countDigits x
-  | x < 0 = countDigits (-x)  -- Handle negative numbers by converting to positive
-  | otherwise = countDigitsLoop x  -- Handle all other cases
-  where
-    countDigitsLoop n
-      | n < 10 = 1  -- If the number is less than 10, it's the last digit
-      | otherwise = 1 + countDigitsLoop (n `div` 10)  -- Recursively count digits
-
---toBinary :: Integer -> Integer
 power :: Integer -> Integer -> Integer
 power _ 0 = 1
 power base exponent
-    | exponent < 0 = error "Negative exponent not supported"
-    | otherwise = base * power base (exponent - 1)
+  | exponent < 0 = error "Exponent must be non-negative"
+  | exponent == 1 = base
+  | otherwise = base * power base (exponent - 1)
 
---fromBinary :: Integer -> Integer
+countDigits :: Integer -> Integer
+countDigits 0 = 1
+countDigits n
+  | n < 0 = digitCounter (-n)
+  | otherwise = digitCounter n
+  where
+    digitCounter :: Integer -> Integer
+    digitCounter x = count x 0
+    count 0 counter = counter
+    count x counter = count (x `div` 10) (counter + 1)
 
+toBinary :: Integer -> Integer
+toBinary 0 = 0
+toBinary 1 = 1
+toBinary n
+  | n < 0 = -binary (-n)
+  | otherwise = binary n
+  where
+    binary :: Integer -> Integer
+    binary x = toBin x 0
+    toBin :: Integer -> Integer -> Integer
+    toBin 0 _ = 0
+    toBin x counter = (x `mod` 2) * power 10 counter + toBin (x `div` 2) (counter + 1)
 
+fromBinary :: Integer -> Integer
+fromBinary 0 = 0
+fromBinary 1 = 1
+fromBinary n
+  | n < 0 = -decimal (-n)
+  | otherwise = decimal n
+  where
+    decimal :: Integer -> Integer
+    decimal x = toDecimal x 0
+    toDecimal :: Integer -> Integer -> Integer
+    toDecimal 0 _ = 0
+    toDecimal x counter = (x `mod` 10) * power 2 counter + toDecimal (x `div` 10) (counter + 1)
 
--- Recursive helper function to sum divisors
-sumDivs :: Integer -> Integer -> Integer
-sumDivs n current
-  | current == 0    = 0  -- Base case: no divisors below 1
-  | n `mod` current == 0 = current + sumDivs n (current - 1)  -- Add current if it's a divisor
-  | otherwise       = sumDivs n (current - 1)  -- Continue with the next lower number
-
--- Function to check if a number is abundant
 isAbundant :: Integer -> Bool
 isAbundant n
-  | n <= 0    = False  -- Abundance doesn't apply to non-positive numbers
-  | otherwise = sumDivs n n-1 > n  -- Check if the sum of divisors is greater than the number
-
+  | n <= 0 = False -- Abundance doesn't apply to non-positive numbers
+  | otherwise = sumDivs n (n - 1) > n -- Check if the sum of divisors is greater than the number
+  where
+    sumDivs :: Integer -> Integer -> Integer
+    sumDivs x current
+      | current < 1 = 0 -- Base case: no divisors below 1
+      | x `mod` current == 0 = current + sumDivs x (current - 1) -- Add current if it's a divisor
+      | otherwise = sumDivs x (current - 1) -- Continue with the next lower number
 
 rotateDigits :: Integer -> Integer
 rotateDigits x
-    | x < 0  = -rotateDigits (-x)
-    | x < 10 = x
-    | otherwise = (x `mod` 10) * power 10 (countDigits (x `div` 10)) + (x `div` 10)
+  | x < 0 = -rotateDigits (-x)
+  | x < 10 = x
+  | otherwise = (x `mod` 10) * power 10 (countDigits (x `div` 10)) + (x `div` 10)
+
 -- ********* --
 
 -- Section 3
@@ -112,17 +134,17 @@ rotateDigits x
 
 type Generator a = (a -> a, a -> Bool, a)
 
---nullGen :: Generator a -> Bool
---lastGen :: Generator a -> a
---lengthGen :: Generator a -> Int
---sumGen :: Generator Integer -> Integer
+-- nullGen :: Generator a -> Bool
+-- lastGen :: Generator a -> a
+-- lengthGen :: Generator a -> Int
+-- sumGen :: Generator Integer -> Integer
 
 type Predicate a = a -> Bool
 
---anyGen :: Predicate a -> Generator a -> Bool
---allGen :: Predicate a -> Generator a -> Bool
---noneGen :: Predicate a -> Generator a -> Bool
---countGen :: Predicate a -> Generator a -> Int
+-- anyGen :: Predicate a -> Generator a -> Bool
+-- allGen :: Predicate a -> Generator a -> Bool
+-- noneGen :: Predicate a -> Generator a -> Bool
+-- countGen :: Predicate a -> Generator a -> Int
 
 -- ********* --
 
@@ -130,10 +152,10 @@ type Predicate a = a -> Bool
 
 -- ********* --
 
---isPrime :: Integer -> Bool
---isSemiprime :: Integer -> Bool
---goldbachPair :: Integer -> (Integer, Integer)
---goldbachPair' :: Integer -> (Integer, Integer)
+-- isPrime :: Integer -> Bool
+-- isSemiprime :: Integer -> Bool
+-- goldbachPair :: Integer -> (Integer, Integer)
+-- goldbachPair' :: Integer -> (Integer, Integer)
 
 -- ***** --
 
@@ -145,9 +167,19 @@ isCircularPrime :: Integer -> Bool
 -- If you choose the implement this function, replace this with the actual implementation
 isCircularPrime = undefined
 
+-- ********* REMOVE BEFORE SUBMISSION ********* --
+
 main :: IO ()
 main = do
-    putStrLn ("isAbundant 9: " ++ show (isAbundant 9))
-    putStrLn ("isAbundant -12345: " ++ show (isAbundant (-12345)))
-    putStrLn ("isAbundant 12: " ++ show (isAbundant 12))
-    putStrLn ("isAbundant 945: " ++ show (isAbundant 945))
+  --   print $ toBinary 0 -- Should output 0
+  --   print $ toBinary 1 -- Should output 1
+  --   print $ toBinary 42 -- Should output 101010
+  --   print $ toBinary (-10) -- Should output -1010
+  --   print $ fromBinary 0 -- Should output 0
+  --   print $ fromBinary 1 -- Should output 1
+  --   print $ fromBinary 101010 -- Should output 42
+  --   print $ fromBinary (-1010) -- Should output -10
+  print $ isAbundant 9 -- Should output False
+  print $ isAbundant (-12345) -- Should output False
+  print $ isAbundant 12 -- Should output True
+  print $ isAbundant 945 -- Should output True
