@@ -137,42 +137,50 @@ type Generator a = (a -> a, a -> Bool, a)
 
 lastGen :: Generator a -> a
 lastGen (next, stop, seed)
-      | not (stop seed)    = seed
-      | otherwise = lastGen (next, stop, next seed)
+  | not (stop seed) = seed
+  | otherwise = lastGen (next, stop, next seed)
 
 lengthGen :: Generator a -> Int
 lengthGen (next, stop, seed)
-      | not (stop seed) = 0
-      | otherwise = 1+lengthGen (next, stop, next seed)
-      
+  | not (stop seed) = 0
+  | otherwise = 1 + lengthGen (next, stop, next seed)
+
 nullGen :: Generator a -> Bool
 nullGen (_, p, x) = not (p x)
+
 sumGen :: Generator Integer -> Integer
 sumGen (f, p, x)
   | nullGen (f, p, x) = 0
   | otherwise = f x + sumGen (f, p, f x)
 
-
-
 type Predicate a = a -> Bool
 
-allGen :: Predicate a -> Generator a -> Bool
-allGen pred (next,cond,seed) = go (next seed) -- skip the initial seed
- where
-   go y
-    | not (pred y) = False -- Return true if the predicate is false
-    | not (cond y) = True -- Stop if get to the last element
-    | otherwise = go (next y) -- Continue with the next element
 anyGen :: Predicate a -> Generator a -> Bool
 anyGen p (f, cont, x) = go (f x) -- skip the initial seed
   where
     go y
-      | not (cont y) = False -- Stop if the continuation predicate is false
       | p y = True -- Return true if the predicate is true
+      | not (cont y) = False -- Stop if the continuation predicate is false
       | otherwise = go (f y) -- Continue with the next element
 
--- noneGen :: Predicate a -> Generator a -> Bool
--- countGen :: Predicate a -> Generator a -> Int
+allGen :: Predicate a -> Generator a -> Bool
+allGen p (f, cont, x) = go (f x) -- skip the initial seed
+  where
+    go y
+      | not (p y) = False -- Return false if the predicate is false
+      | not (cont y) = True -- Stop if the continuation predicate is false
+      | otherwise = go (f y) -- Continue with the next element
+
+noneGen :: Predicate a -> Generator a -> Bool
+noneGen p (f, cont, x) = not (anyGen p (f, cont, x))
+
+countGen :: Predicate a -> Generator a -> Int
+countGen p (f, cont, x) = go (f x) 0 -- skip the initial seed
+  where
+    go y counter
+      | p y = go (f y) (counter + 1) -- Increment counter if the predicate is true
+      | not (cont y) = counter -- Stop if the continuation predicate is false
+      | otherwise = go (f y) counter -- Continue with the next element
 
 -- ********* --
 
@@ -199,23 +207,14 @@ isCircularPrime = undefined
 
 main :: IO ()
 main = do
-  --   print $ toBinary 0 -- Should output 0
-  --   print $ toBinary 1 -- Should output 1
-  --   print $ toBinary 42 -- Should output 101010
-  --   print $ toBinary (-10) -- Should output -1010
-  --   print $ fromBinary 0 -- Should output 0
-  --   print $ fromBinary 1 -- Should output 1
-  --   print $ fromBinary 101010 -- Should output 42
-  --   print $ fromBinary (-1010) -- Should output -10
-  --print $ isAbundant 9 -- Should output False
-  --print $ isAbundant (-12345) -- Should output False
-  --print $ isAbundant 12 -- Should output True
-  --print $ isAbundant 945 -- Should output True
-  --print $ lastGen ((* 2), (< 1), 1 :: Integer) -- Should output 1
-  --print $ lastGen ((* 2) , (<= 1) , 1 :: Integer) -- Should output 2
-  --print $ lastGen ((* 2) , (< 1000) , 1 :: Integer) -- Should output 1024
-  --print $ lengthGen ((+ 1) :: Integer -> Integer, (< 0) :: Integer -> Bool, 0 :: Integer)-- Should output 0
-  --print $ lengthGen ((+ 1) :: Integer -> Integer, (<= 0) :: Integer -> Bool, 0 :: Integer)-- Should output 1
-  --print $ lengthGen ((+ 1) :: Integer -> Integer, (< 10) :: Integer -> Bool, 0 :: Integer)-- Should output 10
-  print $ allGen (< 10) ((* 2) , (< 1000) , 1 :: Integer)
-  print $ allGen (> 0) ((* 2) , (< 1000) , 1 :: Integer)
+  print "HW1"
+  print $ allGen (< 10) ((+ 1), const True, 0) -- False
+  print $ allGen (> 0) ((+ 1), (< 10), 0) -- True
+  print $ anyGen (< 10) ((+ 1), const True, 0) -- True
+  print $ anyGen (<= 0) ((+ 1), (< 10), 0) -- False
+  print $ noneGen (< 10) ((+ 1), const True, 0) -- False
+  print $ noneGen (<= 0) ((+ 1), (< 10), 0) -- True
+  print $ countGen even ((+ 1), (< 10), 0) -- 5
+  print $ countGen even ((+ 1), (< 10), 1) -- 5
+  print $ countGen even ((+ 1), (< 9), 1) -- 4
+  print "Done"
