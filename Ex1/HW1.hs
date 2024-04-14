@@ -4,25 +4,20 @@
 -- Tells HLS to show warnings, and the file won't be compiled if there are any warnings, e.g.,
 -- eval (-- >>>) won't work.
 {-# OPTIONS_GHC -Wall -Werror #-}
-{-# OPTIONS_GHC -Wno-type-defaults #-}
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
--- CHANGE MODULE NAME TO HW1 BEFORE SUBMISSION !!! --
-module Main where
+module HW1 where
 
--- REMOVE IO AND PRINT BEFORE SUBMISSION !!! --
 -- These import statement ensures you aren't using any "advanced" functions and types, e.g., lists.
-import Prelude (Bool (..), Eq (..), IO, Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, print, undefined, ($), (&&), (.), (||))
+import Prelude (Bool (..), Eq (..), Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, undefined, ($), (&&), (.), (||))
 
 ------------------------------------------------
 -- DO NOT MODIFY ANYTHING ABOVE THIS LINE !!! --
 ------------------------------------------------
 
 -- ********* --
-
 -- Section 1
-
 -- ********* --
 
 const :: a -> b -> a
@@ -61,9 +56,7 @@ impossible :: a -> b
 impossible = undefined -- TODO: ASK DANIEL ABOUT THIS
 
 -- ********* --
-
 -- Section 2
-
 -- ********* --
 
 power :: Integer -> Integer -> Integer
@@ -128,9 +121,7 @@ rotateDigits x
   | otherwise = (x `mod` 10) * power 10 (countDigits (x `div` 10)) + (x `div` 10)
 
 -- ********* --
-
 -- Section 3
-
 -- ********* --
 
 type Generator a = (a -> a, a -> Bool, a)
@@ -183,75 +174,70 @@ countGen p (f, cont, x) = go (f x) 0 -- skip the initial seed
       | otherwise = go (f y) counter -- Continue with the next element
 
 -- ********* --
-
 -- Section 4
-
 -- ********* --
 
 isPrime :: Integer -> Bool
 isPrime n
-  | n < 2     =  False
-  | otherwise = not (hasDivisors 2)
+  | n < 2 = False -- 0 and 1 are not prime
+  | otherwise = isPrime' n 2
   where
-    hasDivisors d
-      | d * d > n  = False
-      | n `mod` d == 0 = True
-      | otherwise = hasDivisors (d + 1)
+    isPrime' :: Integer -> Integer -> Bool
+    isPrime' x y
+      | y * y > x = True -- If the square of y is greater than x, x is prime
+      | x `mod` y == 0 = False -- If x is divisible by y, x is not prime
+      | otherwise = isPrime' x (y + 1) -- Continue with the next number
 
 isSemiprime :: Integer -> Bool
 isSemiprime n
- | n < 2     =  False
- | otherwise = semiPrimeCheck 2
- where
+  | n < 2 = False
+  | otherwise = semiPrimeCheck 2
+  where
     semiPrimeCheck d
-      | d * d > n  = False
+      | d * d > n = False
       | n `mod` d == 0 = (isPrime d && isPrime (n `div` d)) || semiPrimeCheck (d + 1)
       | otherwise = semiPrimeCheck (d + 1)
--- goldbachPair :: Integer -> (Integer, Integer)
--- goldbachPair' :: Integer -> (Integer, Integer)
+
+goldbachPair :: Integer -> (Integer, Integer)
+goldbachPair n
+  | n < 4 = error "Goldbach's conjecture applies to numbers greater than 3"
+  | otherwise = findPair n
+  where
+    findPair :: Integer -> (Integer, Integer)
+    findPair x = go 2
+      where
+        go y
+          | isPrime y && isPrime (x - y) = (y, x - y)
+          | otherwise = go (y + 1)
+
+goldbachPair' :: Integer -> (Integer, Integer)
+goldbachPair' n
+  | n < 4 = error "Goldbach's conjecture applies to numbers greater than 3"
+  | otherwise = findMaxProductPair n
+  where
+    findMaxProductPair :: Integer -> (Integer, Integer)
+    findMaxProductPair x = go 2 (0, 0) 0 -- Start the search with the smallest prime, initial pair (0,0), and product 0
+      where
+        go :: Integer -> (Integer, Integer) -> Integer -> (Integer, Integer)
+        go y (a, b) maxProduct
+          | y > x `div` 2 = (a, b) -- if y exceeds x/2, return the current best pair
+          | isPrime y && isPrime (x - y) =
+              let newProduct = y * (x - y)
+               in if newProduct > maxProduct || (newProduct == maxProduct && y > a)
+                    then go (y + 1) (y, x - y) newProduct -- if the new product is greater than the max product, update the best pair
+                    else go (y + 1) (a, b) maxProduct -- otherwise, continue with the next number
+          | otherwise = go (y + 1) (a, b) maxProduct -- continue with the next number
 
 -- ***** --
-
 -- Bonus
-
 -- ***** --
 
 isCircularPrime :: Integer -> Bool
 -- If you choose the implement this function, replace this with the actual implementation
-isCircularPrime x = checkCircularPrime x 1
+isCircularPrime x = checkIsCircularPrime x (countDigits x)
   where
-        checkCircularPrime d c
-          | c > countDigits d = True
-          | not (isPrime d) = False
-          | otherwise = checkCircularPrime (rotateDigits d) (c+1)
-
-
-
-
--- ********* REMOVE BEFORE SUBMISSION ********* --
-
-main :: IO ()
-main = do
-  print "HW1"
---   print $ allGen (< 10) ((+ 1), const True, 0) -- False
---   print $ allGen (> 0) ((+ 1), (< 10), 0) -- True
---   print $ anyGen (< 10) ((+ 1), const True, 0) -- True
---   print $ anyGen (<= 0) ((+ 1), (< 10), 0) -- False
---   print $ noneGen (< 10) ((+ 1), const True, 0) -- False
---   print $ noneGen (<= 0) ((+ 1), (< 10), 0) -- True
---   print $ countGen even ((+ 1), (< 10), 0) -- 5
---   print $ countGen even ((+ 1), (< 10), 1) -- 5
---   print $ countGen even ((+ 1), (< 9), 1) -- 4
--- --   print $ isPrime 7 --true  
---   print $ isPrime 31 --true
---   print $ isPrime 1 --false
---   print $ isPrime (-2) --false
---   print $ isPrime 10 --false
-  print $ isSemiprime 2 --false  
-  print $ isSemiprime 77 --true
-  print $ isSemiprime 1 --false
-  print $ isSemiprime (-2) --false
-  print $ isSemiprime 10 --true
-
-
-  print "Done"
+    checkIsCircularPrime :: Integer -> Integer -> Bool
+    checkIsCircularPrime y 0 = isPrime y
+    checkIsCircularPrime y counter
+      | not (isPrime y) = False
+      | otherwise = checkIsCircularPrime (rotateDigits y) (counter - 1)
