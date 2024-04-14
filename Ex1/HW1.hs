@@ -151,13 +151,28 @@ anyGen :: Predicate a -> Generator a -> Bool
 anyGen p (f, cont, x) = go (f x) -- skip the initial seed
   where
     go y
-      | not (cont y) = False -- Stop if the continuation predicate is false
       | p y = True -- Return true if the predicate is true
+      | not (cont y) = False -- Stop if the continuation predicate is false
       | otherwise = go (f y) -- Continue with the next element
 
--- allGen :: Predicate a -> Generator a -> Bool
--- noneGen :: Predicate a -> Generator a -> Bool
--- countGen :: Predicate a -> Generator a -> Int
+allGen :: Predicate a -> Generator a -> Bool
+allGen p (f, cont, x) = go (f x) -- skip the initial seed
+  where
+    go y
+      | not (p y) = False -- Return false if the predicate is false
+      | not (cont y) = True -- Stop if the continuation predicate is false
+      | otherwise = go (f y) -- Continue with the next element
+
+noneGen :: Predicate a -> Generator a -> Bool
+noneGen p (f, cont, x) = not (anyGen p (f, cont, x))
+
+countGen :: Predicate a -> Generator a -> Int
+countGen p (f, cont, x) = go (f x) 0 -- skip the initial seed
+  where
+    go y counter
+      | p y = go (f y) (counter + 1) -- Increment counter if the predicate is true
+      | not (cont y) = counter -- Stop if the continuation predicate is false
+      | otherwise = go (f y) counter -- Continue with the next element
 
 -- ********* --
 
@@ -185,11 +200,13 @@ isCircularPrime = undefined
 main :: IO ()
 main = do
   print "HW1"
-  print $ nullGen ((+ 1), (< 0), 0) -- True
-  print $ nullGen ((+ 1), (<= 0), 0) -- false
-  print $ nullGen ((+ 1), (<= 1), 0) -- False
-  print $ nullGen ((+ 1), const True, 0) -- False
-  print $ sumGen ((+ 1), (< 10), 0) -- 55
-  print $ sumGen ((+ 1), (< 10), 1) -- 54
-  print $ sumGen ((+ 1), (< 10), 10) -- 0
+  print $ allGen (< 10) ((+ 1), const True, 0) -- False
+  print $ allGen (> 0) ((+ 1), (< 10), 0) -- True
+  print $ anyGen (< 10) ((+ 1), const True, 0) -- True
+  print $ anyGen (<= 0) ((+ 1), (< 10), 0) -- False
+  print $ noneGen (< 10) ((+ 1), const True, 0) -- False
+  print $ noneGen (<= 0) ((+ 1), (< 10), 0) -- True
+  print $ countGen even ((+ 1), (< 10), 0) -- 5
+  print $ countGen even ((+ 1), (< 10), 1) -- 5
+  print $ countGen even ((+ 1), (< 9), 1) -- 4
   print "Done"
