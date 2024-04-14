@@ -4,6 +4,7 @@
 -- Tells HLS to show warnings, and the file won't be compiled if there are any warnings, e.g.,
 -- eval (-- >>>) won't work.
 {-# OPTIONS_GHC -Wall -Werror #-}
+{-# OPTIONS_GHC -Wno-type-defaults #-}
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
@@ -134,14 +135,26 @@ rotateDigits x
 
 type Generator a = (a -> a, a -> Bool, a)
 
--- nullGen :: Generator a -> Bool
+nullGen :: Generator a -> Bool
+nullGen (_, p, x) = not (p x)
+
 -- lastGen :: Generator a -> a
 -- lengthGen :: Generator a -> Int
--- sumGen :: Generator Integer -> Integer
+sumGen :: Generator Integer -> Integer
+sumGen (f, p, x)
+  | nullGen (f, p, x) = 0
+  | otherwise = f x + sumGen (f, p, f x)
 
 type Predicate a = a -> Bool
 
--- anyGen :: Predicate a -> Generator a -> Bool
+anyGen :: Predicate a -> Generator a -> Bool
+anyGen p (f, cont, x) = go (f x) -- skip the initial seed
+  where
+    go y
+      | not (cont y) = False -- Stop if the continuation predicate is false
+      | p y = True -- Return true if the predicate is true
+      | otherwise = go (f y) -- Continue with the next element
+
 -- allGen :: Predicate a -> Generator a -> Bool
 -- noneGen :: Predicate a -> Generator a -> Bool
 -- countGen :: Predicate a -> Generator a -> Int
@@ -171,15 +184,12 @@ isCircularPrime = undefined
 
 main :: IO ()
 main = do
-  --   print $ toBinary 0 -- Should output 0
-  --   print $ toBinary 1 -- Should output 1
-  --   print $ toBinary 42 -- Should output 101010
-  --   print $ toBinary (-10) -- Should output -1010
-  --   print $ fromBinary 0 -- Should output 0
-  --   print $ fromBinary 1 -- Should output 1
-  --   print $ fromBinary 101010 -- Should output 42
-  --   print $ fromBinary (-1010) -- Should output -10
-  print $ isAbundant 9 -- Should output False
-  print $ isAbundant (-12345) -- Should output False
-  print $ isAbundant 12 -- Should output True
-  print $ isAbundant 945 -- Should output True
+  print "HW1"
+  print $ nullGen ((+ 1), (< 0), 0) -- True
+  print $ nullGen ((+ 1), (<= 0), 0) -- false
+  print $ nullGen ((+ 1), (<= 1), 0) -- False
+  print $ nullGen ((+ 1), const True, 0) -- False
+  print $ sumGen ((+ 1), (< 10), 0) -- 55
+  print $ sumGen ((+ 1), (< 10), 1) -- 54
+  print $ sumGen ((+ 1), (< 10), 10) -- 0
+  print "Done"
