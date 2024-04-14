@@ -99,8 +99,6 @@ isAbundant n
   | otherwise = sumDivs n n-1 > n  -- Check if the sum of divisors is greater than the number
 
 
-
-
 rotateDigits :: Integer -> Integer
 rotateDigits x
     | x < 0  = -rotateDigits (-x)
@@ -149,7 +147,7 @@ isCircularPrime = undefined
 
 main :: IO ()
 main = do
-    putStrLn ("isAbundant 9: " ++ show (isAbundant 2))
+    putStrLn ("isAbundant 9: " ++ show (isAbundant 9))
     putStrLn ("isAbundant -12345: " ++ show (isAbundant (-12345)))
     putStrLn ("isAbundant 12: " ++ show (isAbundant 12))
     putStrLn ("isAbundant 945: " ++ show (isAbundant 945))
