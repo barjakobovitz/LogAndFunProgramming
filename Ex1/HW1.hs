@@ -134,10 +134,15 @@ rotateDigits x
 
 type Generator a = (a -> a, a -> Bool, a)
 
--- nullGen :: Generator a -> Bool
+nullGen :: Generator a -> Bool
+nullGen (_, p, x) = not (p x)
+
 -- lastGen :: Generator a -> a
 -- lengthGen :: Generator a -> Int
--- sumGen :: Generator Integer -> Integer
+sumGen :: Generator Integer -> Integer
+sumGen (f, p, x)
+  | nullGen (f, p, x) = 0
+  | otherwise = f x + sumGen (f, p, f x)
 
 type Predicate a = a -> Bool
 
@@ -171,15 +176,5 @@ isCircularPrime = undefined
 
 main :: IO ()
 main = do
-  --   print $ toBinary 0 -- Should output 0
-  --   print $ toBinary 1 -- Should output 1
-  --   print $ toBinary 42 -- Should output 101010
-  --   print $ toBinary (-10) -- Should output -1010
-  --   print $ fromBinary 0 -- Should output 0
-  --   print $ fromBinary 1 -- Should output 1
-  --   print $ fromBinary 101010 -- Should output 42
-  --   print $ fromBinary (-1010) -- Should output -10
-  print $ isAbundant 9 -- Should output False
-  print $ isAbundant (-12345) -- Should output False
-  print $ isAbundant 12 -- Should output True
-  print $ isAbundant 945 -- Should output True
+  print "HW1"
+  print "Done"
