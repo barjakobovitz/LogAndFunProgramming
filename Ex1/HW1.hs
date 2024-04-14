@@ -13,6 +13,8 @@ module Main where
 
 -- REMOVE IO AND PRINT BEFORE SUBMISSION !!! --
 -- These import statement ensures you aren't using any "advanced" functions and types, e.g., lists.
+
+import Control.Concurrent.STM (check)
 import Prelude (Bool (..), Eq (..), IO, Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, print, undefined, ($), (&&), (.), (||))
 
 ------------------------------------------------
@@ -188,10 +190,48 @@ countGen p (f, cont, x) = go (f x) 0 -- skip the initial seed
 
 -- ********* --
 
--- isPrime :: Integer -> Bool
+isPrime :: Integer -> Bool
+isPrime n
+  | n < 2 = False -- 0 and 1 are not prime
+  | otherwise = isPrime' n 2
+  where
+    isPrime' :: Integer -> Integer -> Bool
+    isPrime' x y
+      | y * y > x = True -- If the square of y is greater than x, x is prime
+      | x `mod` y == 0 = False -- If x is divisible by y, x is not prime
+      | otherwise = isPrime' x (y + 1) -- Continue with the next number
+
 -- isSemiprime :: Integer -> Bool
--- goldbachPair :: Integer -> (Integer, Integer)
--- goldbachPair' :: Integer -> (Integer, Integer)
+
+goldbachPair :: Integer -> (Integer, Integer)
+goldbachPair n
+  | n < 4 = error "Goldbach's conjecture applies to numbers greater than 3"
+  | otherwise = findPair n
+  where
+    findPair :: Integer -> (Integer, Integer)
+    findPair x = go 2
+      where
+        go y
+          | isPrime y && isPrime (x - y) = (y, x - y)
+          | otherwise = go (y + 1)
+
+goldbachPair' :: Integer -> (Integer, Integer)
+goldbachPair' n
+  | n < 4 = error "Goldbach's conjecture applies to numbers greater than 3"
+  | otherwise = findMaxProductPair n
+  where
+    findMaxProductPair :: Integer -> (Integer, Integer)
+    findMaxProductPair x = go 2 (0, 0) 0 -- Start the search with the smallest prime, initial pair (0,0), and product 0
+      where
+        go :: Integer -> (Integer, Integer) -> Integer -> (Integer, Integer)
+        go y (a, b) maxProduct
+          | y > x `div` 2 = (a, b) -- if y exceeds x/2, return the current best pair
+          | isPrime y && isPrime (x - y) =
+              let newProduct = y * (x - y)
+               in if newProduct > maxProduct || (newProduct == maxProduct && y > a)
+                    then go (y + 1) (y, x - y) newProduct -- if the new product is greater than the max product, update the best pair
+                    else go (y + 1) (a, b) maxProduct -- otherwise, continue with the next number
+          | otherwise = go (y + 1) (a, b) maxProduct -- continue with the next number
 
 -- ***** --
 
@@ -201,20 +241,23 @@ countGen p (f, cont, x) = go (f x) 0 -- skip the initial seed
 
 isCircularPrime :: Integer -> Bool
 -- If you choose the implement this function, replace this with the actual implementation
-isCircularPrime = undefined
+isCircularPrime x = checkIsCircularPrime x (countDigits x)
+  where
+    checkIsCircularPrime :: Integer -> Integer -> Bool
+    checkIsCircularPrime y 0 = isPrime y
+    checkIsCircularPrime y counter
+      | not (isPrime y) = False
+      | otherwise = checkIsCircularPrime (rotateDigits y) (counter - 1)
 
 -- ********* REMOVE BEFORE SUBMISSION ********* --
 
 main :: IO ()
 main = do
   print "HW1"
-  print $ allGen (< 10) ((+ 1), const True, 0) -- False
-  print $ allGen (> 0) ((+ 1), (< 10), 0) -- True
-  print $ anyGen (< 10) ((+ 1), const True, 0) -- True
-  print $ anyGen (<= 0) ((+ 1), (< 10), 0) -- False
-  print $ noneGen (< 10) ((+ 1), const True, 0) -- False
-  print $ noneGen (<= 0) ((+ 1), (< 10), 0) -- True
-  print $ countGen even ((+ 1), (< 10), 0) -- 5
-  print $ countGen even ((+ 1), (< 10), 1) -- 5
-  print $ countGen even ((+ 1), (< 9), 1) -- 4
+  print $ isCircularPrime 5 -- True
+  print $ isCircularPrime 17 -- True
+  print $ isCircularPrime 103 -- False
+  print $ isCircularPrime 193 -- False
+  print $ isCircularPrime 197 -- True
+  print $ isCircularPrime 199 -- True
   print "Done"
