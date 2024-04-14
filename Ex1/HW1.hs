@@ -135,11 +135,19 @@ rotateDigits x
 
 type Generator a = (a -> a, a -> Bool, a)
 
+lastGen :: Generator a -> a
+lastGen (next, stop, seed)
+  | not (stop seed) = seed
+  | otherwise = lastGen (next, stop, next seed)
+
+lengthGen :: Generator a -> Int
+lengthGen (next, stop, seed)
+  | not (stop seed) = 0
+  | otherwise = 1 + lengthGen (next, stop, next seed)
+
 nullGen :: Generator a -> Bool
 nullGen (_, p, x) = not (p x)
 
--- lastGen :: Generator a -> a
--- lengthGen :: Generator a -> Int
 sumGen :: Generator Integer -> Integer
 sumGen (f, p, x)
   | nullGen (f, p, x) = 0
