@@ -7,10 +7,12 @@
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
-module HW1 where
+-- CHANGE MODULE NAME TO HW1 BEFORE SUBMISSION !!! --
+module Main where
 
+-- REMOVE IO AND PRINT BEFORE SUBMISSION !!! --
 -- These import statement ensures you aren't using any "advanced" functions and types, e.g., lists.
-import Prelude (Bool (..), Eq (..), Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, undefined, ($), (&&), (.), (||))
+import Prelude (Bool (..), Eq (..), IO, Int, Integer, Num (..), Ord (..), div, error, even, flip, id, mod, not, otherwise, print, undefined, ($), (&&), (.), (||))
 
 ------------------------------------------------
 -- DO NOT MODIFY ANYTHING ABOVE THIS LINE !!! --
@@ -35,10 +37,10 @@ uncurry3 :: (a -> b -> c -> d) -> (a, b, c) -> d
 uncurry3 f (x, y, z) = f x y z
 
 rotate :: (a -> b -> c -> d) -> c -> a -> b -> d
-rotate f x y z = f z x y
+rotate f x y z = f y z x
 
 lotate :: (a -> b -> c -> d) -> b -> c -> a -> d
-lotate f x y z = f y z x
+lotate f x y z = f z x y
 
 -- Generalizations of (.)
 (.:) :: (d -> e) -> (a -> b -> c -> d) -> a -> b -> c -> e
@@ -55,7 +57,7 @@ lotate f x y z = f y z x
 
 -- How can we ever implement such a function!?
 impossible :: a -> b
-impossible = error "impossible" -- TODO: ASK DANIEL ABOUT THIS
+impossible = undefined -- TODO: ASK DANIEL ABOUT THIS
 
 -- ********* --
 
@@ -63,11 +65,52 @@ impossible = error "impossible" -- TODO: ASK DANIEL ABOUT THIS
 
 -- ********* --
 
+power :: Integer -> Integer -> Integer
+power _ 0 = 1
+power base exponent
+  | exponent < 0 = error "Exponent must be non-negative"
+  | exponent == 1 = base
+  | otherwise = base * power base (exponent - 1)
+
 countDigits :: Integer -> Integer
+countDigits 0 = 1
+countDigits n
+  | n < 0 = digitCounter (-n)
+  | otherwise = digitCounter n
+  where
+    digitCounter :: Integer -> Integer
+    digitCounter x = count x 0
+    count 0 counter = counter
+    count x counter = count (x `div` 10) (counter + 1)
+
 toBinary :: Integer -> Integer
+toBinary 0 = 0
+toBinary 1 = 1
+toBinary n
+  | n < 0 = -binary (-n)
+  | otherwise = binary n
+  where
+    binary :: Integer -> Integer
+    binary x = toBin x 0
+    toBin :: Integer -> Integer -> Integer
+    toBin 0 _ = 0
+    toBin x counter = (x `mod` 2) * power 10 counter + toBin (x `div` 2) (counter + 1)
+
 fromBinary :: Integer -> Integer
-isAbundant :: Integer -> Bool
-rotateDigits :: Integer -> Integer
+fromBinary 0 = 0
+fromBinary 1 = 1
+fromBinary n
+  | n < 0 = -decimal (-n)
+  | otherwise = decimal n
+  where
+    decimal :: Integer -> Integer
+    decimal x = toDecimal x 0
+    toDecimal :: Integer -> Integer -> Integer
+    toDecimal 0 _ = 0
+    toDecimal x counter = (x `mod` 10) * power 2 counter + toDecimal (x `div` 10) (counter + 1)
+
+-- isAbundant :: Integer -> Bool
+-- rotateDigits :: Integer -> Integer
 
 -- ********* --
 
@@ -77,17 +120,17 @@ rotateDigits :: Integer -> Integer
 
 type Generator a = (a -> a, a -> Bool, a)
 
-nullGen :: Generator a -> Bool
-lastGen :: Generator a -> a
-lengthGen :: Generator a -> Int
-sumGen :: Generator Integer -> Integer
+-- nullGen :: Generator a -> Bool
+-- lastGen :: Generator a -> a
+-- lengthGen :: Generator a -> Int
+-- sumGen :: Generator Integer -> Integer
 
 type Predicate a = a -> Bool
 
-anyGen :: Predicate a -> Generator a -> Bool
-allGen :: Predicate a -> Generator a -> Bool
-noneGen :: Predicate a -> Generator a -> Bool
-countGen :: Predicate a -> Generator a -> Int
+-- anyGen :: Predicate a -> Generator a -> Bool
+-- allGen :: Predicate a -> Generator a -> Bool
+-- noneGen :: Predicate a -> Generator a -> Bool
+-- countGen :: Predicate a -> Generator a -> Int
 
 -- ********* --
 
@@ -95,10 +138,10 @@ countGen :: Predicate a -> Generator a -> Int
 
 -- ********* --
 
-isPrime :: Integer -> Bool
-isSemiprime :: Integer -> Bool
-goldbachPair :: Integer -> (Integer, Integer)
-goldbachPair' :: Integer -> (Integer, Integer)
+-- isPrime :: Integer -> Bool
+-- isSemiprime :: Integer -> Bool
+-- goldbachPair :: Integer -> (Integer, Integer)
+-- goldbachPair' :: Integer -> (Integer, Integer)
 
 -- ***** --
 
@@ -109,3 +152,16 @@ goldbachPair' :: Integer -> (Integer, Integer)
 isCircularPrime :: Integer -> Bool
 -- If you choose the implement this function, replace this with the actual implementation
 isCircularPrime = undefined
+
+-- ********* REMOVE BEFORE SUBMISSION ********* --
+
+main :: IO ()
+main = do
+  print $ toBinary 0 -- Should output 0
+  print $ toBinary 1 -- Should output 1
+  print $ toBinary 42 -- Should output 101010
+  print $ toBinary (-10) -- Should output -1010
+  print $ fromBinary 0 -- Should output 0
+  print $ fromBinary 1 -- Should output 1
+  print $ fromBinary 101010 -- Should output 42
+  print $ fromBinary (-1010) -- Should output -10
