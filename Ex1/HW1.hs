@@ -188,8 +188,25 @@ countGen p (f, cont, x) = go (f x) 0 -- skip the initial seed
 
 -- ********* --
 
--- isPrime :: Integer -> Bool
--- isSemiprime :: Integer -> Bool
+isPrime :: Integer -> Bool
+isPrime n
+  | n < 2     =  False
+  | otherwise = not (hasDivisors 2)
+  where
+    hasDivisors d
+      | d * d > n  = False
+      | n `mod` d == 0 = True
+      | otherwise = hasDivisors (d + 1)
+
+isSemiprime :: Integer -> Bool
+isSemiprime n
+ | n < 2     =  False
+ | otherwise = semiPrimeCheck 2
+ where
+    semiPrimeCheck d
+      | d * d > n  = False
+      | n `mod` d == 0 = (isPrime d && isPrime (n `div` d)) || semiPrimeCheck (d + 1)
+      | otherwise = semiPrimeCheck (d + 1)
 -- goldbachPair :: Integer -> (Integer, Integer)
 -- goldbachPair' :: Integer -> (Integer, Integer)
 
@@ -201,20 +218,40 @@ countGen p (f, cont, x) = go (f x) 0 -- skip the initial seed
 
 isCircularPrime :: Integer -> Bool
 -- If you choose the implement this function, replace this with the actual implementation
-isCircularPrime = undefined
+isCircularPrime x = checkCircularPrime x 1
+  where
+        checkCircularPrime d c
+          | c > countDigits d = True
+          | not (isPrime d) = False
+          | otherwise = checkCircularPrime (rotateDigits d) (c+1)
+
+
+
 
 -- ********* REMOVE BEFORE SUBMISSION ********* --
 
 main :: IO ()
 main = do
   print "HW1"
-  print $ allGen (< 10) ((+ 1), const True, 0) -- False
-  print $ allGen (> 0) ((+ 1), (< 10), 0) -- True
-  print $ anyGen (< 10) ((+ 1), const True, 0) -- True
-  print $ anyGen (<= 0) ((+ 1), (< 10), 0) -- False
-  print $ noneGen (< 10) ((+ 1), const True, 0) -- False
-  print $ noneGen (<= 0) ((+ 1), (< 10), 0) -- True
-  print $ countGen even ((+ 1), (< 10), 0) -- 5
-  print $ countGen even ((+ 1), (< 10), 1) -- 5
-  print $ countGen even ((+ 1), (< 9), 1) -- 4
+--   print $ allGen (< 10) ((+ 1), const True, 0) -- False
+--   print $ allGen (> 0) ((+ 1), (< 10), 0) -- True
+--   print $ anyGen (< 10) ((+ 1), const True, 0) -- True
+--   print $ anyGen (<= 0) ((+ 1), (< 10), 0) -- False
+--   print $ noneGen (< 10) ((+ 1), const True, 0) -- False
+--   print $ noneGen (<= 0) ((+ 1), (< 10), 0) -- True
+--   print $ countGen even ((+ 1), (< 10), 0) -- 5
+--   print $ countGen even ((+ 1), (< 10), 1) -- 5
+--   print $ countGen even ((+ 1), (< 9), 1) -- 4
+-- --   print $ isPrime 7 --true  
+--   print $ isPrime 31 --true
+--   print $ isPrime 1 --false
+--   print $ isPrime (-2) --false
+--   print $ isPrime 10 --false
+  print $ isSemiprime 2 --false  
+  print $ isSemiprime 77 --true
+  print $ isSemiprime 1 --false
+  print $ isSemiprime (-2) --false
+  print $ isSemiprime 10 --true
+
+
   print "Done"
