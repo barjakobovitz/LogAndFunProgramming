@@ -4,6 +4,7 @@
 -- Tells HLS to show warnings, and the file won't be compiled if there are any warnings, e.g.,
 -- eval (-- >>>) won't work.
 {-# OPTIONS_GHC -Wall -Werror #-}
+{-# OPTIONS_GHC -Wno-type-defaults #-}
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
@@ -134,7 +135,6 @@ rotateDigits x
 
 type Generator a = (a -> a, a -> Bool, a)
 
--- nullGen :: Generator a -> Bool
 lastGen :: Generator a -> a
 lastGen (next, stop, seed)
       | not (stop seed)    = seed
@@ -144,13 +144,17 @@ lengthGen :: Generator a -> Int
 lengthGen (next, stop, seed)
       | not (stop seed) = 0
       | otherwise = 1+lengthGen (next, stop, next seed)
+      
+nullGen :: Generator a -> Bool
+nullGen (_, p, x) = not (p x)
+sumGen :: Generator Integer -> Integer
+sumGen (f, p, x)
+  | nullGen (f, p, x) = 0
+  | otherwise = f x + sumGen (f, p, f x)
 
--- sumGen :: Generator Integer -> Integer
 
 
 type Predicate a = a -> Bool
-
--- anyGen :: Predicate a -> Generator a -> Bool
 
 allGen :: Predicate a -> Generator a -> Bool
 allGen pred (next,cond,seed) = go (next seed) -- skip the initial seed
@@ -159,6 +163,13 @@ allGen pred (next,cond,seed) = go (next seed) -- skip the initial seed
     | not (pred y) = False -- Return true if the predicate is false
     | not (cond y) = True -- Stop if get to the last element
     | otherwise = go (next y) -- Continue with the next element
+anyGen :: Predicate a -> Generator a -> Bool
+anyGen p (f, cont, x) = go (f x) -- skip the initial seed
+  where
+    go y
+      | not (cont y) = False -- Stop if the continuation predicate is false
+      | p y = True -- Return true if the predicate is true
+      | otherwise = go (f y) -- Continue with the next element
 
 -- noneGen :: Predicate a -> Generator a -> Bool
 -- countGen :: Predicate a -> Generator a -> Int
