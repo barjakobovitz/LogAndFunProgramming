@@ -40,6 +40,7 @@ lotate f x y z = f y z x
 
 -- Generalizations of (.)
 (.:) :: (d -> e) -> (a -> b -> c -> d) -> a -> b -> c -> e
+
 (.:.) :: (e -> f) -> (a -> b -> c -> d -> e) -> a -> b -> c -> d -> f
 (.::) :: (f -> g) -> (a -> b -> c -> d -> e -> f) -> a -> b -> c -> d -> e -> g
 (.::.) :: (g -> h) -> (a -> b -> c -> d -> e -> f -> g) -> a -> b -> c -> d -> e -> f -> h
