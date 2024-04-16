@@ -123,9 +123,9 @@ isAbundant n
 
 rotateDigits :: Integer -> Integer
 rotateDigits x
-  | x < 0 = -rotateDigits (-x)
+  | x < 0 = - (((-x) `mod` 10) * power 10 (countDigits ((-x) `div` 10)) + ((-x) `div` 10))
   | x < 10 = x
-  | otherwise = (x `mod` 10) * power 10 (countDigits (x `div` 10)) + (x `div` 10)
+  | otherwise = (x `mod` (power 10 ((countDigits x)-1)))*10+(x `div` (power 10 ((countDigits x)-1)))
 
 -- ********* --
 
@@ -247,11 +247,17 @@ main = do
 --   print $ isPrime 1 --false
 --   print $ isPrime (-2) --false
 --   print $ isPrime 10 --false
-  print $ isSemiprime 2 --false  
-  print $ isSemiprime 77 --true
-  print $ isSemiprime 1 --false
-  print $ isSemiprime (-2) --false
-  print $ isSemiprime 10 --true
+--   print $ isSemiprime 2 --false  
+--   print $ isSemiprime 77 --true
+--   print $ isSemiprime 1 --false
+--   print $ isSemiprime (-2) --false
+--   print $ isSemiprime 10 --true
+  print $ rotateDigits 1 --1
+  print $ rotateDigits 1234 -- 2341
+  print $ rotateDigits (-1234) ---4123
+  print $ rotateDigits 102 -- 21
+  print $ rotateDigits (-102) -- -210
+
 
 
   print "Done"
