@@ -116,9 +116,9 @@ isAbundant n
 
 rotateDigits :: Integer -> Integer
 rotateDigits x
-  | x < 0 = -rotateDigits (-x)
+  | x < 0 = - (((-x) `mod` 10) * power 10 (countDigits ((-x) `div` 10)) + ((-x) `div` 10))
   | x < 10 = x
-  | otherwise = (x `mod` 10) * power 10 (countDigits (x `div` 10)) + (x `div` 10)
+  | otherwise = (x `mod` (power 10 ((countDigits x)-1)))*10+(x `div` (power 10 ((countDigits x)-1)))
 
 -- ********* --
 -- Section 3
