@@ -25,12 +25,14 @@ maybe :: b -> (a -> b) -> Maybe a -> b
 maybe defaultValue _ Nothing = defaultValue
 maybe _ f (Just x) = f x
 
--- catMaybes :: [Maybe a] -> [a]
+catMaybes :: [Maybe a] -> [a]
+catMaybes []=[]
+catMaybes (x:xs)= case x of
+    Nothing-> catMaybes xs
+    Just a-> a : catMaybes xs
+
 mapMaybe :: (a -> Maybe b) -> [a] -> [b]
-mapMaybe _ [] = []
-mapMaybe f (x : xs) = case f x of
-  Nothing -> mapMaybe f xs
-  Just y -> y : mapMaybe f xs
+mapMaybe func xs = catMaybes (map func xs)
 
 -- -- Section 1.2 Basic Eithers
 -- concatEitherMap :: (a -> Either e b) -> Either e a -> Either e b
