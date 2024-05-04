@@ -131,8 +131,18 @@ tails (x:xs) = (x:xs) : tails xs
 
 -- Section 3: zips and products
 -- zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
--- zip :: [a] -> [b] -> [(a, b)]
--- zipFill :: a -> b -> [a] -> [b] -> [(a, b)]
+zip :: [a] -> [b] -> [(a, b)]
+zip [] _ = []
+zip _ [] = []
+zip (x:xs) (y:ys) = (x, y) : zip xs ys
+
+zipFill :: a -> b -> [a] -> [b] -> [(a, b)]
+zipFill _ _ [] [] = []
+zipFill defValue1 defValue2 [] (y:ys) = (defValue1, y) : zipFill defValue1 defValue2 [] ys
+zipFill defValue1 defValue2 (x:xs) [] = (x, defValue2) : zipFill defValue1 defValue2 xs []
+zipFill defValue1 defValue2 (x:xs) (y:ys) = (x, y) : zipFill defValue1 defValue2 xs ys
+
+
 -- data ZipFail = ErrorFirst | ErrorSecond deriving (Eq, Show)
 -- zipFail :: [a] -> [b] -> Either ZipFail [(a, b)]
 -- unzip :: [(a, b)] -> ([a], [b])
