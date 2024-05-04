@@ -7,6 +7,7 @@ module HW2 where
 
 import Data.List (find, foldl')
 import Prelude (Bool (..), Bounded (..), Char, Either (..), Enum (..), Eq (..), Int, Integer, Maybe (..), Num (..), Ord (..), Show (..), String, all, and, any, concat, concatMap, const, curry, div, elem, error, even, filter, flip, foldl, foldr, fst, id, length, lines, lookup, map, mod, not, notElem, null, odd, otherwise, product, snd, sum, uncurry, undefined, unlines, unwords, words, (!!), ($), (&&), (++), (.), (||))
+import Control.Monad (when)
 
 ------------------------------------------------
 -- DO NOT MODIFY ANYTHING ABOVE THIS LINE !!! --
@@ -69,13 +70,25 @@ eitherToMaybe (Left _) = Nothing
 eitherToMaybe (Right b) = Just b
 
 -- Section 2: Lists
--- take :: Int -> [a] -> [a]
+take :: Int -> [a] -> [a]
+take n xs = case n of
+    0 -> []
+    _ -> case xs of
+        [] -> []
+        (y:ys) -> y : take (n-1) ys
 takeWhile :: (a -> Bool) -> [a] -> [a]
 takeWhile _ [] = []
 takeWhile p (x:xs)
   | p x= x:takeWhile p xs
   | otherwise= []
--- drop :: Int -> [a] -> [a]
+
+drop :: Int -> [a] -> [a]
+drop n xs = case n of
+    0 -> xs
+    _ -> case xs of
+        [] -> []
+        (_:ys) -> drop (n-1) ys
+
 dropWhile :: (a -> Bool) -> [a] -> [a]
 dropWhile _ [] = []
 dropWhile p (x:xs)
@@ -85,8 +98,18 @@ dropWhile p (x:xs)
 reverse :: [a] -> [a]
 reverse []=[]
 reverse (x:xs)= reverse xs ++ [x]
--- rotate :: Int -> [a] -> [a]
--- lotate :: Int -> [a] -> [a]
+
+rotate :: Int -> [a] -> [a]
+rotate n xs
+    | n <= 0 = xs
+    | otherwise = rotate (n - 1) (drop (k - 1) xs ++ take (k - 1) xs)
+    where k = length xs - (n `mod` length xs)
+
+lotate :: Int -> [a] -> [a]
+lotate n xs
+    | n <= 0 = xs
+    | otherwise = lotate (n - 1) (drop 1 xs ++ take 1 xs)
+
 type Generator a = (a -> a, a -> Bool, a)
 fromGenerator :: Generator a -> [a]
 fromGenerator (f, p, x)
@@ -106,7 +129,6 @@ tails :: [a] -> [[a]]
 tails [] = [[]]
 tails (x:xs) = (x:xs) : tails xs
 
-
 -- Section 3: zips and products
 -- zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
 -- zip :: [a] -> [b] -> [(a, b)]
@@ -119,7 +141,7 @@ tails (x:xs) = (x:xs) : tails xs
 -- -- Position (0, 0) is the top-left corner.
 -- data KnightPos = KnightPos {x :: Int, y :: Int} deriving (Show, Eq)
 -- data KnightMove = TopLeft | TopRight | RightTop | RightBottom | BottomRight | BottomLeft | LeftBottom | LeftTop deriving (Enum, Bounded, Show, Eq)
--- -- Utility to get all knight moves. Don't worry about the implementation of this.
+-- Utility to get all knight moves. Don't worry about the implementation of this.
 -- allKnightMoves :: [KnightMove]
 -- allKnightMoves = [minBound .. maxBound]
 -- data Board = Board {width :: Int, height :: Int} deriving (Show, Eq)
