@@ -34,16 +34,41 @@ catMaybes (x:xs)= case x of
 mapMaybe :: (a -> Maybe b) -> [a] -> [b]
 mapMaybe func xs = catMaybes (map func xs)
 
--- -- Section 1.2 Basic Eithers
--- concatEitherMap :: (a -> Either e b) -> Either e a -> Either e b
--- either :: (a -> c) -> (b -> c) -> Either a b -> c
--- mapLeft :: (a -> c) -> Either a b -> Either c b
--- catEithers :: [Either e a] -> Either e [a]
--- mapEither :: (a -> Either e b) -> [a] -> Either e [b]
--- partitionEithers :: [Either a b] -> ([a], [b])
--- eitherToMaybe :: Either a b -> Maybe b
+-- Section 1.2 Basic Eithers
+concatEitherMap :: (a -> Either e b) -> Either e a -> Either e b
+concatEitherMap _ (Left e) = Left e
+concatEitherMap f (Right x) = f x
 
--- -- Section 2: Lists
+either :: (a -> c) -> (b -> c) -> Either a b -> c
+either f _ (Left x) = f x
+either _ g (Right x) = g x
+
+mapLeft :: (a -> c) -> Either a b -> Either c b
+mapLeft f (Left x) = Left (f x)
+mapLeft _ (Right x) = Right x
+
+catEithers :: [Either e a] -> Either e [a]
+catEithers [] = Right []
+catEithers (x:xs) = case x of
+    Left e -> Left e
+    Right a -> case catEithers xs of
+        Left e -> Left e
+        Right as -> Right (a:as)
+
+mapEither :: (a -> Either e b) -> [a] -> Either e [b]
+mapEither func xs = catEithers (map func xs)
+
+partitionEithers :: [Either a b] -> ([a], [b])
+partitionEithers = foldr (\x (as, bs) -> case x of
+    Left a -> (a:as, bs)
+    Right b -> (as, b:bs)) ([], [])
+
+
+eitherToMaybe :: Either a b -> Maybe b
+eitherToMaybe (Left _) = Nothing
+eitherToMaybe (Right b) = Just b
+
+-- Section 2: Lists
 -- take :: Int -> [a] -> [a]
 -- takeWhile :: (a -> Bool) -> [a] -> [a]
 -- drop :: Int -> [a] -> [a]
@@ -57,7 +82,7 @@ mapMaybe func xs = catMaybes (map func xs)
 -- inits :: [a] -> [[a]]
 -- tails :: [a] -> [[a]]
 
--- -- Section 3: zips and products
+-- Section 3: zips and products
 -- zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
 -- zip :: [a] -> [b] -> [(a, b)]
 -- zipFill :: a -> b -> [a] -> [b] -> [(a, b)]
@@ -65,7 +90,7 @@ mapMaybe func xs = catMaybes (map func xs)
 -- zipFail :: [a] -> [b] -> Either ZipFail [(a, b)]
 -- unzip :: [(a, b)] -> ([a], [b])
 
--- -- Section 4: Knight travels
+-- Section 4: Knight travels
 -- -- Position (0, 0) is the top-left corner.
 -- data KnightPos = KnightPos {x :: Int, y :: Int} deriving (Show, Eq)
 -- data KnightMove = TopLeft | TopRight | RightTop | RightBottom | BottomRight | BottomLeft | LeftBottom | LeftTop deriving (Enum, Bounded, Show, Eq)
@@ -78,5 +103,5 @@ mapMaybe func xs = catMaybes (map func xs)
 -- translate :: KnightPos -> [KnightMove] -> [KnightPos]
 -- translate' :: [KnightPos] -> Either InvalidPosition [KnightMove]
 
--- -- Bonus (10 points)
+-- Bonus (10 points)
 -- mark :: Board -> [KnightPos] -> Either InvalidPosition [[Int]]
