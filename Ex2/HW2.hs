@@ -134,8 +134,10 @@ zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
 zipWith _ [] _ = []
 zipWith _ _ [] = []
 zipWith f (x:xs) (y:ys) = f x y : zipWith f xs ys
+
 -- zip :: [a] -> [b] -> [(a, b)]
 -- zipFill :: a -> b -> [a] -> [b] -> [(a, b)]
+
 data ZipFail = ErrorFirst | ErrorSecond deriving (Eq, Show)
 zipFail :: [a] -> [b] -> Either ZipFail [(a, b)]
 zipFail [] [] = Right []
@@ -145,6 +147,7 @@ zipFail (x:xs) (y:ys) = case zipFail xs ys of
     Left ErrorFirst -> Left ErrorFirst
     Left ErrorSecond -> Left ErrorSecond
     Right zs -> Right ((x, y) : zs)
+
 unzip :: [(a, b)] -> ([a], [b])
 unzip [] = ([], [])
 unzip ((x, y):xs) = case unzip xs of
