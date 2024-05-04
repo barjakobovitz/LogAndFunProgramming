@@ -110,6 +110,7 @@ lotate n xs
     | n <= 0 = xs
     | otherwise = lotate (n - 1) (drop 1 xs ++ take 1 xs)
 
+type Generator a = (a -> a, a -> Bool, a)
 fromGenerator :: Generator a -> [a]
 fromGenerator (f, p, x)
     | p x = f x:fromGenerator (f,p,f x)
