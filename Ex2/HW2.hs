@@ -122,7 +122,7 @@ replicate counter val
 
 inits :: [a] -> [[a]]
 inits [] = [[]]
-inits (x:xs)= []:map(x:)(inits xs)
+inits (x:xs)= []:map (x:) (inits xs)
 
 tails :: [a] -> [[a]]
 tails [] = [[]]
@@ -169,9 +169,87 @@ allKnightMoves :: [KnightMove]
 allKnightMoves = [minBound .. maxBound]
 data Board = Board {width :: Int, height :: Int} deriving (Show, Eq)
 tour :: Board -> KnightPos -> Maybe [KnightMove]
+tour board start = backtrack [start] []
+  where
+    backtrack :: [KnightPos] -> [KnightMove] -> Maybe [KnightMove]
+    backtrack [] _ = Nothing  -- This case ideally shouldn't happen since we always start with at least one element.
+    backtrack (currentPos:restVisited) moves
+      | length (currentPos:restVisited) == boardSize board = Just (reverse moves)  -- If all cells are visited
+      | otherwise = foldl' tryMove Nothing (filter (validMove currentPos) allKnightMoves)
+      where
+        tryMove :: Maybe [KnightMove] -> KnightMove -> Maybe [KnightMove]
+        tryMove acc move = case acc of
+          Just _ -> acc  -- If a valid tour has already been found, skip further processing
+          Nothing -> do  -- Try this move
+            let newPos = applyMove currentPos move
+            if newPos `elem` (currentPos:restVisited)
+              then Nothing
+              else backtrack (newPos : currentPos : restVisited) (move : moves)
+              
+        -- Checks if a move is valid (stays within board and goes to unvisited position)
+        validMove :: KnightPos -> KnightMove -> Bool
+        validMove pos move = inBounds board (applyMove pos move) && notElem (applyMove pos move) (pos : restVisited)
+        -- Check if the position is within the bounds of the board
+        inBounds :: Board -> KnightPos -> Bool
+        inBounds (Board w h) (KnightPos x y) = x >= 0 && y >= 0 && x < w && y < h
+        -- Calculate the total number of cells on the board
+        boardSize :: Board -> Int
+        boardSize (Board w h) = w * h
+
+applyMove :: KnightPos -> KnightMove -> KnightPos
+applyMove (KnightPos x y) move = case move of
+    TopLeft -> KnightPos (x - 2) (y - 1)
+    TopRight -> KnightPos (x + 2) (y - 1)
+    RightTop -> KnightPos (x + 1) (y - 2)
+    RightBottom -> KnightPos (x + 1) (y + 2)
+    BottomRight -> KnightPos (x + 2) (y + 1)
+    BottomLeft -> KnightPos (x - 2) (y + 1)
+    LeftBottom -> KnightPos (x - 1) (y + 2)
+    LeftTop -> KnightPos (x - 1) (y - 2)
+
 newtype InvalidPosition = InvalidPosition KnightPos deriving (Show, Eq)
 translate :: KnightPos -> [KnightMove] -> [KnightPos]
+translate _ [] = []
+translate startPos (m:ms) = newPos : translate newPos ms
+  where
+    newPos = applyMove startPos m
+
 translate' :: [KnightPos] -> Either InvalidPosition [KnightMove]
+translate' = checkMoves
+  where
+    checkMoves :: [KnightPos] -> Either InvalidPosition [KnightMove]
+    checkMoves [] = Right []
+    checkMoves [_] = Right []
+    checkMoves (p1:p2:ps) =
+      case validKnightMove p1 p2 of
+        Just move -> case checkMoves (p2:ps) of
+                        Right moves -> Right (move:moves)
+                        Left err -> Left err
+        Nothing -> Left (InvalidPosition p2)
+
+    validKnightMove :: KnightPos -> KnightPos -> Maybe KnightMove
+    validKnightMove (KnightPos x1 y1) (KnightPos x2 y2) =
+      find (\move -> applyMove (KnightPos x1 y1) move == KnightPos x2 y2) allKnightMoves
+
+
 
 -- Bonus (10 points)
--- mark :: Board -> [KnightPos] -> Either InvalidPosition [[Int]]
+mark :: Board -> [KnightPos] -> Either InvalidPosition [[Int]]
+mark board positions = do
+  let indexedPositions = zip [1..] positions
+  -- Initialize the board with zeros
+  let initBoard = replicate (height board) (replicate (width board) (-1))
+  -- Place the step numbers in their respective positions
+  foldl' (placeOnBoard board) (Right initBoard) indexedPositions
+    
+placeOnBoard :: Board -> Either InvalidPosition [[Int]] -> (Int, KnightPos) -> Either InvalidPosition [[Int]]
+placeOnBoard _ (Left err) _ = Left err
+placeOnBoard board (Right brd) (step, KnightPos x y) 
+  | x < 0 || y < 0 || x >= width board || y >= height board = Left (InvalidPosition (KnightPos x y))
+  | otherwise = Right (updateBoard x y step brd)
+
+updateBoard :: Int -> Int -> Int -> [[Int]] -> [[Int]]
+updateBoard x y step brd = 
+  take x brd ++ 
+  [take y (brd !! x) ++ [step] ++ drop (y + 1) (brd !! x)] ++ 
+  drop (x + 1) brd
