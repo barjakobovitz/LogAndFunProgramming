@@ -34,14 +34,20 @@ catMaybes (x:xs)= case x of
 mapMaybe :: (a -> Maybe b) -> [a] -> [b]
 mapMaybe func xs = catMaybes (map func xs)
 
--- -- Section 1.2 Basic Eithers
+-- Section 1.2 Basic Eithers
 -- concatEitherMap :: (a -> Either e b) -> Either e a -> Either e b
--- either :: (a -> c) -> (b -> c) -> Either a b -> c
+either :: (a -> c) -> (b -> c) -> Either a b -> c
+either f _ (Left x)= f x
+either _ g (Right y)=  g y
+
 -- mapLeft :: (a -> c) -> Either a b -> Either c b
 -- catEithers :: [Either e a] -> Either e [a]
 -- mapEither :: (a -> Either e b) -> [a] -> Either e [b]
 -- partitionEithers :: [Either a b] -> ([a], [b])
--- eitherToMaybe :: Either a b -> Maybe b
+eitherToMaybe :: Either a b -> Maybe b
+eitherToMaybe (Left _)= Nothing
+eitherToMaybe (Right x)= Just x
+
 
 -- -- Section 2: Lists
 -- take :: Int -> [a] -> [a]
