@@ -130,7 +130,11 @@ tails [] = [[]]
 tails (x:xs) = (x:xs) : tails xs
 
 -- Section 3: zips and products
--- zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith _ [] _ = []
+zipWith _ _ [] = []
+zipWith f (x:xs) (y:ys) = f x y : zipWith f xs ys
+
 zip :: [a] -> [b] -> [(a, b)]
 zip [] _ = []
 zip _ [] = []
@@ -142,10 +146,20 @@ zipFill defValue1 defValue2 [] (y:ys) = (defValue1, y) : zipFill defValue1 defVa
 zipFill defValue1 defValue2 (x:xs) [] = (x, defValue2) : zipFill defValue1 defValue2 xs []
 zipFill defValue1 defValue2 (x:xs) (y:ys) = (x, y) : zipFill defValue1 defValue2 xs ys
 
+data ZipFail = ErrorFirst | ErrorSecond deriving (Eq, Show)
+zipFail :: [a] -> [b] -> Either ZipFail [(a, b)]
+zipFail [] [] = Right []
+zipFail [] _ = Left ErrorFirst
+zipFail _ [] = Left ErrorSecond
+zipFail (x:xs) (y:ys) = case zipFail xs ys of
+    Left ErrorFirst -> Left ErrorFirst
+    Left ErrorSecond -> Left ErrorSecond
+    Right zs -> Right ((x, y) : zs)
 
--- data ZipFail = ErrorFirst | ErrorSecond deriving (Eq, Show)
--- zipFail :: [a] -> [b] -> Either ZipFail [(a, b)]
--- unzip :: [(a, b)] -> ([a], [b])
+unzip :: [(a, b)] -> ([a], [b])
+unzip [] = ([], [])
+unzip ((x, y):xs) = case unzip xs of
+    (as, bs) -> (x:as, y:bs)
 
 -- Section 4: Knight travels
 -- -- Position (0, 0) is the top-left corner.
