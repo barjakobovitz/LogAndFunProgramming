@@ -76,8 +76,12 @@ take n xs = case n of
     _ -> case xs of
         [] -> []
         (y:ys) -> y : take (n-1) ys
+takeWhile :: (a -> Bool) -> [a] -> [a]
+takeWhile _ [] = []
+takeWhile p (x:xs)
+  | p x= x:takeWhile p xs
+  | otherwise= []
 
--- takeWhile :: (a -> Bool) -> [a] -> [a]
 drop :: Int -> [a] -> [a]
 drop n xs = case n of
     0 -> xs
@@ -85,8 +89,16 @@ drop n xs = case n of
         [] -> []
         (_:ys) -> drop (n-1) ys
 
--- dropWhile :: (a -> Bool) -> [a] -> [a]
--- reverse :: [a] -> [a]
+dropWhile :: (a -> Bool) -> [a] -> [a]
+dropWhile _ [] = []
+dropWhile p (x:xs)
+  | p x= dropWhile p xs
+  | otherwise= x:xs
+
+reverse :: [a] -> [a]
+reverse []=[]
+reverse (x:xs)= reverse xs ++ [x]
+
 rotate :: Int -> [a] -> [a]
 rotate n xs
     | n <= 0 = xs
@@ -98,11 +110,23 @@ lotate n xs
     | n <= 0 = xs
     | otherwise = lotate (n - 1) (drop 1 xs ++ take 1 xs)
 
-type Generator a = (a -> a, a -> Bool, a)
--- fromGenerator :: Generator a -> [a]
--- replicate :: Int -> a -> [a]
--- inits :: [a] -> [[a]]
--- tails :: [a] -> [[a]]
+fromGenerator :: Generator a -> [a]
+fromGenerator (f, p, x)
+    | p x = f x:fromGenerator (f,p,f x)
+    | otherwise = []
+
+replicate :: Int -> a -> [a]
+replicate counter val
+    | counter>0 = val:replicate (counter-1) val
+    | otherwise = []
+
+inits :: [a] -> [[a]]
+inits [] = [[]]
+inits (x:xs)= []:map(x:)(inits xs)
+
+tails :: [a] -> [[a]]
+tails [] = [[]]
+tails (x:xs) = (x:xs) : tails xs
 
 -- Section 3: zips and products
 -- zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
