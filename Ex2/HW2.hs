@@ -13,20 +13,27 @@ import Prelude (Bool (..), Bounded (..), Char, Either (..), Enum (..), Eq (..), 
 ------------------------------------------------
 
 -- Section 1.1: Basic Maybes
--- concatMaybeMap :: (a -> Maybe b) -> Maybe a -> Maybe b
-fromMaybe :: a -> Maybe a -> a
-fromMaybe defValue Nothing = defValue
-fromMaybe _ (Just x) =  x
+concatMaybeMap :: (a -> Maybe b) -> Maybe a -> Maybe b
+concatMaybeMap _ Nothing = Nothing
+concatMaybeMap f (Just x) = f x
 
--- maybe :: b -> (a -> b) -> Maybe a -> b
+fromMaybe :: a -> Maybe a -> a
+fromMaybe defaultValue Nothing = defaultValue
+fromMaybe _ (Just x) = x
+
+maybe :: b -> (a -> b) -> Maybe a -> b
+maybe defaultValue _ Nothing = defaultValue
+maybe _ f (Just x) = f x
+
 catMaybes :: [Maybe a] -> [a]
 catMaybes []=[]
 catMaybes (x:xs)= case x of
     Nothing-> catMaybes xs
     Just a-> a : catMaybes xs
-   
 
--- mapMaybe :: (a -> Maybe b) -> [a] -> [b]
+mapMaybe :: (a -> Maybe b) -> [a] -> [b]
+mapMaybe func xs = catMaybes (map func xs)
+
 -- -- Section 1.2 Basic Eithers
 -- concatEitherMap :: (a -> Either e b) -> Either e a -> Either e b
 -- either :: (a -> c) -> (b -> c) -> Either a b -> c
