@@ -161,17 +161,17 @@ unzip ((x, y):xs) = case unzip xs of
     (as, bs) -> (x:as, y:bs)
 
 -- Section 4: Knight travels
--- -- Position (0, 0) is the top-left corner.
--- data KnightPos = KnightPos {x :: Int, y :: Int} deriving (Show, Eq)
--- data KnightMove = TopLeft | TopRight | RightTop | RightBottom | BottomRight | BottomLeft | LeftBottom | LeftTop deriving (Enum, Bounded, Show, Eq)
+-- Position (0, 0) is the top-left corner.
+data KnightPos = KnightPos {x :: Int, y :: Int} deriving (Show, Eq)
+data KnightMove = TopLeft | TopRight | RightTop | RightBottom | BottomRight | BottomLeft | LeftBottom | LeftTop deriving (Enum, Bounded, Show, Eq)
 -- Utility to get all knight moves. Don't worry about the implementation of this.
--- allKnightMoves :: [KnightMove]
--- allKnightMoves = [minBound .. maxBound]
--- data Board = Board {width :: Int, height :: Int} deriving (Show, Eq)
--- tour :: Board -> KnightPos -> Maybe [KnightMove]
--- newtype InvalidPosition = InvalidPosition KnightPos deriving (Show, Eq)
--- translate :: KnightPos -> [KnightMove] -> [KnightPos]
--- translate' :: [KnightPos] -> Either InvalidPosition [KnightMove]
+allKnightMoves :: [KnightMove]
+allKnightMoves = [minBound .. maxBound]
+data Board = Board {width :: Int, height :: Int} deriving (Show, Eq)
+tour :: Board -> KnightPos -> Maybe [KnightMove]
+newtype InvalidPosition = InvalidPosition KnightPos deriving (Show, Eq)
+translate :: KnightPos -> [KnightMove] -> [KnightPos]
+translate' :: [KnightPos] -> Either InvalidPosition [KnightMove]
 
 -- Bonus (10 points)
 -- mark :: Board -> [KnightPos] -> Either InvalidPosition [[Int]]
