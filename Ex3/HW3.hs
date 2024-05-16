@@ -48,47 +48,78 @@ sample :: InfiniteList a -> [a]
 sample = take 10 . itoList
 
 itoList :: InfiniteList a -> [a]
-itoList = undefined
+itoList (x :> xs) = x : itoList xs
 
 iiterate :: (a -> a) -> a -> InfiniteList a
-iiterate = undefined
+iiterate f x = x :> iiterate f (f x)
 
 irepeat :: a -> InfiniteList a
-irepeat = undefined
+irepeat x = x :> irepeat x
 
 iprepend :: [a] -> InfiniteList a -> InfiniteList a
-iprepend = undefined
+iprepend [] infList = infList
+iprepend (x : xs) infList = x :> iprepend xs infList
 
 itake :: Integer -> InfiniteList a -> [a]
-itake = undefined
+itake n _ | n <= 0 = []
+itake n (x :> xs) = x : itake (n - 1) xs
 
 idrop :: Integer -> InfiniteList a -> InfiniteList a
-idrop = undefined
+idrop n infList@(_ :> xs) = if n <= 0 then infList else idrop (n - 1) xs
 
 naturals :: InfiniteList Integer
-naturals = undefined
+naturals = iiterate (+1) 0
 
 imap :: (a -> b) -> InfiniteList a -> InfiniteList b
-imap = undefined
+imap f (x :> xs) = f x :> imap f xs
 
 ifilter :: (a -> Bool) -> InfiniteList a -> InfiniteList a
-ifilter = undefined
+ifilter p (x :> xs) = if p x then x :> ifilter p xs else ifilter p xs
 
 ifind :: (a -> Bool) -> InfiniteList a -> a
-ifind = undefined
+ifind p (x :> xs) = if p x then x else ifind p xs
+
 
 iconcat :: InfiniteList [a] -> InfiniteList a
-iconcat = undefined
+iconcat (x :> xs) = iprepend x (iconcat xs)
 
 integers :: InfiniteList Integer
-integers = undefined
+integers = 0 :> iiterate nextInteger 0
+    where
+        nextInteger :: Integer -> Integer
+        nextInteger x
+            | x > 0 = -x
+            | otherwise = -x + 1
 
 rationals :: InfiniteList Rational
-rationals = undefined
+rationals = interleavePosNeg $ breadthFirstRationals [(1, 1)]
+  where
+    -- Breadth-first traversal of rationals using a queue
+    breadthFirstRationals :: [(Integer, Integer)] -> InfiniteList Rational
+    breadthFirstRationals queue = case queue of
+        [] -> irepeat 0
+        ((a, b) : rest) -> (a % b) :> breadthFirstRationals (rest ++ [(a, a + b), (a + b, b)])
+
+    -- Interleave positive and negative versions of each rational
+    interleavePosNeg :: InfiniteList Rational -> InfiniteList Rational
+    interleavePosNeg (x :> xs) = x :> negate x :> x :> negate x :> interleavePosNeg xs
+
 
 -- Bonus: same as rationals, but without repeats!
 rationals' :: InfiniteList Rational
-rationals' = undefined
+rationals' = breadthFirstUniqueRationals [] [(1, 1)]
+  where
+    -- Breadth-first traversal of unique rationals using a queue
+    breadthFirstUniqueRationals :: [Rational] -> [(Integer, Integer)] -> InfiniteList Rational
+    breadthFirstUniqueRationals _ [] = irepeat 0
+    breadthFirstUniqueRationals seen ((a, b) : rest) =
+      let r = a % b
+          newSeen = r : (-r) : seen
+          newQueue = rest ++ [(a, a + b), (a + b, b)]
+      in if r `elem` seen || (-r) `elem` seen
+         then breadthFirstUniqueRationals seen newQueue
+         else r :> (-r) :> breadthFirstUniqueRationals newSeen newQueue
+
 
 -- Section 3: Stack Machine
 data StackError = DivisionByZero | StackUnderflow {instruction :: String, stackValue :: Maybe Int} deriving (Show, Eq)
