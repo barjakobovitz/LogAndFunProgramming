@@ -122,9 +122,69 @@ rationals' = breadthFirstUniqueRationals [] [(1, 1)]
 
 
 -- Section 3: Stack Machine
-data StackError = DivisionByZero | StackUnderflow {instruction :: String, stackValue :: Maybe Int} deriving (Show, Eq)
+-- Define the data types for stack errors and run errors
+data StackError = DivisionByZero | StackUnderflow { instruction :: String, stackValue :: Maybe Int }
+    deriving (Show, Eq)
 
-data RunError = InstructionError StackError | ParseError {line :: String} deriving (Show, Eq)
+data RunError = InstructionError StackError | ParseError { line :: String }
+    deriving (Show, Eq)
 
+-- Define the data type for instructions
+data Instruction = Push Int | Pop | Swap | Dup | Add | Sub | Mul | Div
+    deriving (Show, Eq)
+
+-- Function to parse a single instruction line
+parseInstruction :: String -> Either RunError Instruction
+parseInstruction line = 
+    case words line of
+        ["PUSH", nStr] -> case readMaybe nStr of
+            Just n  -> Right (Push n)
+            Nothing -> Left (ParseError line)
+        ["POP"]       -> Right Pop
+        ["SWAP"]      -> Right Swap
+        ["DUP"]       -> Right Dup
+        ["ADD"]       -> Right Add
+        ["SUB"]       -> Right Sub
+        ["MUL"]       -> Right Mul
+        ["DIV"]       -> Right Div
+        _             -> Left (ParseError line)
+
+-- Function to run a single instruction on the stack
+runInstruction :: [Int] -> Instruction -> Either StackError [Int]
+runInstruction stack (Push n) = Right (n : stack)
+runInstruction [] Pop = Left (StackUnderflow "POP" Nothing)
+runInstruction (_:xs) Pop = Right xs
+runInstruction [] Swap = Left (StackUnderflow "SWAP" Nothing)
+runInstruction [_] Swap = Left (StackUnderflow "SWAP" Nothing)
+runInstruction (x:y:xs) Swap = Right (y:x:xs)
+runInstruction [] Dup = Left (StackUnderflow "DUP" Nothing)
+runInstruction (x:xs) Dup = Right (x:x:xs)
+runInstruction (x:y:xs) Add = Right ((x + y):xs)
+runInstruction [] Add = Left (StackUnderflow "ADD" Nothing)
+runInstruction [_] Add = Left (StackUnderflow "ADD" Nothing)
+runInstruction (x:y:xs) Sub = Right ((x - y):xs)
+runInstruction [] Sub = Left (StackUnderflow "SUB" Nothing)
+runInstruction [_] Sub = Left (StackUnderflow "SUB" Nothing)
+runInstruction (x:y:xs) Mul = Right ((x * y):xs)
+runInstruction [] Mul = Left (StackUnderflow "MUL" Nothing)
+runInstruction [_] Mul = Left (StackUnderflow "MUL" Nothing)
+runInstruction (x:y:xs) Div
+    | y == 0 = Left DivisionByZero
+    | otherwise = Right (safeDiv y x:xs)
+  where
+    safeDiv _ 0 = 0 -- Define the result of division by zero as 0
+    safeDiv a b = a `div` b
+runInstruction [] Div = Left (StackUnderflow "DIV" Nothing)
+runInstruction [_] Div = Left (StackUnderflow "DIV" Nothing)
+
+-- Function to parse and run all instructions from a multi-line string
 parseAndRun :: String -> Either RunError [Int]
-parseAndRun = undefined
+parseAndRun input = foldr execute (Right []) (reverse (lines input))
+  where
+    execute line acc = case acc of
+        Left err -> Left err
+        Right stack -> case parseInstruction line of
+            Left err -> Left err
+            Right instr -> case runInstruction stack instr of
+                Left err -> Left (InstructionError err)
+                Right newStack -> Right newStack
