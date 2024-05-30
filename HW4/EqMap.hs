@@ -11,6 +11,7 @@ module EqMap
     remove,
     EqMap.lookup, -- To avoid name clash with Prelude.lookup
     assocs,
+    EqMap.fromList
   )
 where
 
@@ -43,6 +44,9 @@ lookup key (EqMap set) = fmap (\(Arg _ v) -> v) . find (\(Arg k _) -> k == key) 
 assocs :: EqMap k v -> [(k, v)]
 assocs (EqMap s) = map (\(Arg k v) -> (k, v)) (EqSet.elems s)
 
+fromList :: (Eq k) => [(k, v)] -> EqMap k v
+fromList = foldr (uncurry EqMap.insert) empty
+
 instance (Eq k, Eq v) => Eq (EqMap k v) where
   EqMap set1 == EqMap set2 = set1 == set2
 
@@ -72,6 +76,4 @@ instance (Eq k, Semigroup v) => Semigroup (CombiningMap k v) where
 
 instance (Eq k, Semigroup v) => Monoid (CombiningMap k v) where
   mempty = CombiningMap empty
-  mappend :: (Eq k, Semigroup v) =>
-CombiningMap k v -> CombiningMap k v -> CombiningMap k v
   mappend = (<>)

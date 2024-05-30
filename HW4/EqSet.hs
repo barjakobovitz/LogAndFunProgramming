@@ -9,6 +9,7 @@ module EqSet
     member,
     remove,
     elems,
+    EqSet.fromList
   )
 where
 
@@ -32,6 +33,9 @@ remove x (EqSet xs) = EqSet (delete x xs)
 
 elems :: EqSet a -> [a]
 elems (EqSet xs) = xs
+
+fromList :: (Eq a) => [a] -> EqSet a
+fromList = foldr EqSet.insert empty
 
 instance (Eq a) => Eq (EqSet a) where
   EqSet xs == EqSet ys = all (`elem` ys) xs && all (`elem` xs) ys
