@@ -44,6 +44,7 @@ instance (Show a) => Show (EqSet a) where
   show eqSet = "{" ++ intercalate ", " (map show (getSet eqSet)) ++ "}"
 
 instance (Eq a) => Semigroup (EqSet a) where
+  (<>) :: Eq a => EqSet a -> EqSet a -> EqSet a
   (EqSet xs) <> (EqSet ys) = EqSet $ foldr insertIfNotPresent ys xs
     where
       insertIfNotPresent x acc = if x `elem` acc then acc else x : acc
