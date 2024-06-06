@@ -6,6 +6,8 @@
 {-# OPTIONS_GHC -Wall -Werror #-}
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use lambda-case" #-}
 
 module HW4 where
 
@@ -159,13 +161,14 @@ instance (Metric a, Metric b) => Metric (Either a b) where
 -- Lists of different sizes have distance of infinity.
 -- Euclidean distance.
 instance Metric a => Metric [a] where
-  distance :: Metric a => [a] -> [a] -> Double
   distance [] [] = 0
   distance [] _ = infinity
   distance _ [] = infinity
   distance xs ys
     | length xs /= length ys = infinity
     | otherwise = sqrt . sum $ zipWith (\x y -> distance x y ** 2) xs ys
+
+
 
 newtype ManhattanList a = ManhattanList [a] deriving Eq
 instance Metric a => Metric (ManhattanList a) where
@@ -212,6 +215,61 @@ metricBubbleSortOn f d = repeatSort
     repeatSort lst = let (swapped, sorted) = bubble lst
                       in if swapped then repeatSort sorted else sorted
 
--- Bonus (10 points).
-clusters :: Metric a => [a] -> [[a]]
-clusters = undefined
+
+
+--bonus
+
+dfs :: (Metric a, Eq a) => [Maybe a] -> Maybe a -> [Maybe a]
+dfs xs start = dfs' [start] []
+  where
+    dfs' [] visited = reverse visited
+    dfs' (Nothing : stack) visited =
+      let nothings = filter isNothing xs
+          remainingNothings = nothings \\ visited
+      in if null remainingNothings
+          then dfs' stack visited
+          else dfs' (stack ++ remainingNothings) (visited ++ nothings)
+    dfs' (Just x:stack) visited
+      | Just x `elem` visited = dfs' stack visited
+      | otherwise =
+          let neighbors = filter (\y -> case y of
+                                          Nothing -> False
+                                          Just y' -> distance x y' < infinity) xs
+          in dfs' (stack ++ neighbors) (Just x : visited)
+
+
+
+
+
+clusters :: (Metric a, Eq a, Show a) => [Maybe a] -> IO [[Maybe a]]
+clusters [] = return []
+clusters (x:xs) = do
+  let cluster = dfs (x:xs) x
+      remaining = filter (`notElem` cluster) xs
+  rest <- clusters remaining
+  return (cluster : rest)
+
+
+          
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
