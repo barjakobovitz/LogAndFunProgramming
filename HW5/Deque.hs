@@ -2,6 +2,7 @@
 {-# OPTIONS_GHC -Wall -Werror #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
+
 module Deque (Deque, empty, pushr, pushl, popr, popl) where
 
 import Control.Applicative (liftA2)
@@ -36,8 +37,26 @@ popr = \case
   Deque l [] -> popr $ Deque [] (reverse l)
 
 instance Semigroup (Deque a) where
+    Deque l r <> Deque l' r' = Deque (l ++ reverse r ++ l') (r')
+  
 instance Monoid (Deque a) where
+  mempty = empty
 instance Foldable Deque where
+  foldMap f (Deque l r) = foldMap f l <> foldMap f r
 instance Functor Deque where
+    fmap f (Deque front rear) = Deque (map f front) (map f rear)
+
+
 instance Applicative Deque where
+      pure x = Deque [x] []
+      Deque fs rs <*> Deque xs ys = 
+        let leftApplied = [f x | f <- fs ++ reverse rs, x <- xs ++ reverse ys]
+        in Deque leftApplied []
+    
+    
+    
+  
+
+    
 instance Monad Deque where
+  Deque l r >>= f = foldl' (flip pushr) (Deque [] []) (concatMap (toList . f) (l ++ reverse r))

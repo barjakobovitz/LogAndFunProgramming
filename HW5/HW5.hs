@@ -7,6 +7,8 @@
 -- Refines the above, allowing for unused imports.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
+module HW5 where
+
 import Control.Applicative (liftA2)
 import Data.Char (ord)
 import Data.Either
@@ -22,78 +24,113 @@ import Data.Set qualified as S
 import Deque (Deque)
 import Deque qualified as DQ
 
+
 data FoldMapFunc a m result = FoldMapFunc {agg :: a -> m, finalize :: m -> result}
 
 foldMap' :: (Foldable t, Monoid m) => FoldMapFunc a m result -> t a -> result
 foldMap' FoldMapFunc{agg, finalize} = finalize . foldMap agg
 
 -- Section 1: Foldable functions
-fmsum :: Num a => FoldMapFunc a _ a
-fmor :: FoldMapFunc Bool _ Bool
-fmfold :: Monoid a => FoldMapFunc a _ a
-fmelem :: Eq a => a -> FoldMapFunc a _ Bool
-fmfind :: (a -> Bool) -> FoldMapFunc a _ (Maybe a)
-fmlength :: FoldMapFunc a _ Int
-fmnull :: FoldMapFunc a _ Bool
-fmmaximum :: Ord a => FoldMapFunc a _ (Maybe a)
-fmminimum :: Ord a => FoldMapFunc a _ (Maybe a)
-fmmaxBy :: Ord b => (a -> b) -> FoldMapFunc a _ (Maybe a)
-fmminBy :: Ord b => (a -> b) -> FoldMapFunc a _ (Maybe a)
-fmtoList :: FoldMapFunc a _ [a]
+fmsum :: Num a => FoldMapFunc a (Sum a) a
+fmsum = FoldMapFunc Sum getSum
+fmor :: FoldMapFunc Bool Any Bool
+fmor = FoldMapFunc Any getAny
+fmfold :: Monoid a => FoldMapFunc a a a
+fmfold = FoldMapFunc id id
+fmelem :: Eq a => a -> FoldMapFunc a Any Bool
+fmelem x = FoldMapFunc (\y -> Any (x == y)) getAny
+fmfind :: (a -> Bool) -> FoldMapFunc a (First a) (Maybe a)
+fmfind pred1 = FoldMapFunc (\x -> First (if pred1 x then Just x else Nothing)) getFirst
+fmlength :: FoldMapFunc a (Sum Int) Int
+fmlength = FoldMapFunc (const (Sum 1)) getSum
+fmnull :: FoldMapFunc a All Bool
+fmnull = FoldMapFunc (const (All False)) getAll
+fmmaximum :: Ord a => FoldMapFunc a (Maybe (Max a)) (Maybe a)
+fmmaximum = FoldMapFunc (Just . Max) getMaxMaybe
+  where
+    getMaxMaybe :: Maybe (Max a) -> Maybe a
+    getMaxMaybe = fmap getMax
+fmminimum :: Ord a => FoldMapFunc a (Maybe (Min a)) (Maybe a)
+fmminimum = FoldMapFunc (Just . Min) getMinMaybe
+      where
+        getMinMaybe :: Maybe (Min a) -> Maybe a
+        getMinMaybe = fmap getMin
+fmmaxBy :: Ord b => (a -> b) -> FoldMapFunc a (Maybe (Max (Arg b a))) (Maybe a)
+fmmaxBy f = FoldMapFunc (Just . Max . (\x -> Arg (f x) x)) getMaxByMaybe
+          where
+            getMaxByMaybe :: Maybe (Max (Arg b a)) -> Maybe a
+            getMaxByMaybe = fmap (\(Max (Arg _ a)) -> a)
+fmminBy :: Ord b => (a -> b) -> FoldMapFunc a (Maybe (Min (Arg b a))) (Maybe a)
+fmminBy f = FoldMapFunc (Just . Min . (\x -> Arg (f x) x)) getMinByMaybe
+              where
+                getMinByMaybe :: Maybe (Min (Arg b a)) -> Maybe a
+                getMinByMaybe = fmap (\(Min (Arg _ a)) -> a)
+fmtoList :: FoldMapFunc a [a] [a]
+fmtoList = FoldMapFunc (: []) id
 
--- Section 2: Deque instances (Don't forget to implement the instances in Deque.hs as well!)
+-- -- Section 2: Deque instances (Don't forget to implement the instances in Deque.hs as well!)
 newtype DequeWrapper a = DequeWrapper (Deque a) deriving (Show, Eq)
-instance Semigroup (DequeWrapper a)
-instance Monoid (DequeWrapper a)
-instance Foldable DequeWrapper
-instance Functor DequeWrapper
-instance Applicative DequeWrapper
-instance Monad DequeWrapper
+instance Semigroup (DequeWrapper a) where
+  DequeWrapper dq1 <> DequeWrapper dq2 = DequeWrapper (dq1 <> dq2)
+instance Monoid (DequeWrapper a) where
+  mempty = DequeWrapper DQ.empty
+instance Foldable DequeWrapper where
+  foldMap f (DequeWrapper dq) = foldMap f dq
+instance Functor DequeWrapper where
+  fmap f (DequeWrapper dq) = DequeWrapper (fmap f dq)
+instance Applicative DequeWrapper where
+  pure x = DequeWrapper (pure x)
+  DequeWrapper dq1 <*> DequeWrapper dq2 = DequeWrapper (dq1 <*> dq2)
+instance Monad DequeWrapper where
+  DequeWrapper dq >>= f = DequeWrapper (dq >>= (\x -> case f x of DequeWrapper dq' -> dq')) 
 
--- Section 3: Calculator and traverse
-class Monad f => CalculatorError f where
-  divideByZero :: f Int
-  missingVariable :: String -> f Int
+-- -- Section 3: Calculator and traverse
+-- class Monad f => CalculatorError f where
+--   divideByZero :: f Int
+--   missingVariable :: String -> f Int
 
-runCalculator :: CalculatorError f => Map String Int -> Expr -> f Int
+-- runCalculator :: CalculatorError f => Map String Int -> Expr -> f Int
 
--- Instances to implement:
-instance CalculatorError Maybe
+-- -- Instances to implement:
+-- instance CalculatorError Maybe
 
-data Err = DivByZero | MissingVar String deriving (Show, Eq)
-instance CalculatorError (Either Err)
+-- data Err = DivByZero | MissingVar String deriving (Show, Eq)
+-- instance CalculatorError (Either Err)
 
-data Defaults
-  = Defaults
-  -- This replaces the entire division result, not just the denominator!
-  { defaultForDivisionByZero :: Int
-  , defaultForVariable :: String -> Int
-  }
-defaults =
-  Defaults
-    { defaultForDivisionByZero = 0
-    , defaultForVariable = sum . map ord
-    }
-instance CalculatorError (Reader Defaults)
+-- data Defaults
+--   = Defaults
+--   -- This replaces the entire division result, not just the denominator!
+--   { defaultForDivisionByZero :: Int
+--   , defaultForVariable :: String -> Int
+--   }
+-- defaults =
+--   Defaults
+--     { defaultForDivisionByZero = 0
+--     , defaultForVariable = sum . map ord
+--     }
+-- instance CalculatorError (Reader Defaults)
 
--- From the lectures:
-newtype Reader r a = Reader {runReader :: r -> a}
-instance Functor (Reader r) where
-  fmap f r = Reader $ f . runReader r
-instance Applicative (Reader r) where
-  pure = Reader . const
-  liftA2 f ra rb = Reader $ \r -> f (runReader ra r) (runReader rb r)
-instance Monad (Reader r) where
-  ra >>= f = Reader $ \r -> runReader (f $ runReader ra r) r
+-- -- From the lectures:
+-- newtype Reader r a = Reader {runReader :: r -> a}
+-- instance Functor (Reader r) where
+--   fmap f r = Reader $ f . runReader r
+-- instance Applicative (Reader r) where
+--   pure = Reader . const
+--   liftA2 f ra rb = Reader $ \r -> f (runReader ra r) (runReader rb r)
+-- instance Monad (Reader r) where
+--   ra >>= f = Reader $ \r -> runReader (f $ runReader ra r) r
 
-data Expr
-  = Val Int
-  | Var String
-  | Add Expr Expr
-  | Sub Expr Expr
-  | Mul Expr Expr
-  | Div Expr Expr
-  deriving (Show, Eq)
+-- data Expr
+--   = Val Int
+--   | Var String
+--   | Add Expr Expr
+--   | Sub Expr Expr
+--   | Mul Expr Expr
+--   | Div Expr Expr
+--   deriving (Show, Eq)
 
--- Section 4: Hangman
-hangman :: String -> IO Int
+-- -- Section 4: Hangman
+-- hangman :: String -> IO Int
+
+
+
