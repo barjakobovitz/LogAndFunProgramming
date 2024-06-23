@@ -218,9 +218,20 @@ metricBubbleSortOn f d = repeatSort
 
 
 --bonus
-
-dfs :: (Metric a, Eq a) => [Maybe a] -> Maybe a -> [Maybe a]
+-- Define the depth-first search function for regular values
+dfs :: (Metric a, Eq a) => [a] -> a -> [a]
 dfs xs start = dfs' [start] []
+  where
+    dfs' [] visited = reverse visited
+    dfs' (x:stack) visited
+      | x `elem` visited = dfs' stack visited
+      | otherwise =
+          let neighbors = filter (\y -> distance x y < infinity && y `notElem` visited) xs
+          in dfs' (neighbors ++ stack) (x : visited)
+
+-- Define the depth-first search function for Maybe values
+dfsMaybe :: (Metric a, Eq a) => [Maybe a] -> Maybe a -> [Maybe a]
+dfsMaybe xs start = dfs' [start] []
   where
     dfs' [] visited = reverse visited
     dfs' (Nothing : stack) visited =
@@ -237,39 +248,34 @@ dfs xs start = dfs' [start] []
                                           Just y' -> distance x y' < infinity) xs
           in dfs' (stack ++ neighbors) (Just x : visited)
 
+-- Clustering function for regular values
+clusters' :: (Metric a, Eq a) => [a] -> [[a]]
+clusters' [] = []
+clusters' (x:xs) =
+  let clusterRegular = dfs (x:xs) x
+      remaining = filter (`notElem` clusterRegular) xs
+  in clusterRegular : clusters' remaining
 
+-- Clustering function for Maybe values
+clustersMaybe :: (Metric a, Eq a) => [Maybe a] -> [[Maybe a]]
+clustersMaybe [] = []
+clustersMaybe (x:xs) =
+  let clusterMaybe = dfsMaybe (x:xs) x
+      remaining = filter (`notElem` clusterMaybe) xs
+  in clusterMaybe : clustersMaybe remaining
 
+-- Type class for clustering strategy
+class Clusterable a where
+  cluster :: (Metric b, Eq b) => [a b] -> [[a b]]
 
+instance Clusterable [] where
+  cluster :: (Metric b, Eq b) => [b] -> [[b]]
+  cluster = clusters'
 
-clusters :: (Metric a, Eq a, Show a) => [Maybe a] -> IO [[Maybe a]]
-clusters [] = return []
-clusters (x:xs) = do
-  let cluster = dfs (x:xs) x
-      remaining = filter (`notElem` cluster) xs
-  rest <- clusters remaining
-  return (cluster : rest)
+instance Clusterable Maybe where
+  cluster :: (Metric b, Eq b) => [Maybe b] -> [[Maybe b]]
+  cluster = clustersMaybe
 
-
-          
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- General clustering function
+clusters :: (Clusterable f, Metric a, Eq a) => [f a] -> [[f a]]
+clusters = cluster
